@@ -198,6 +198,18 @@ export default function ShoppingApp() {
     editingNoteIds.current.delete(id);
   }
 
+  function handleSpecificationChange(id: number, specification: string) {
+    if (!currentUser) return;
+    const now = new Date().toISOString();
+    const value = specification.trim() ? specification : null;
+    setItems((prev) =>
+      prev.map((it) =>
+        it.id === id ? { ...it, specification: value, updated_by: currentUser, updated_at: now } : it,
+      ),
+    );
+    scheduleSave(id, { specification: value, updated_by: currentUser, updated_at: now });
+  }
+
   function handleQuoteChange(id: number, quotePatch: Partial<QuotePatch>) {
     if (!currentUser) return;
     const now = new Date().toISOString();
@@ -416,6 +428,7 @@ export default function ShoppingApp() {
                     item={item}
                     saveStatus={saveStatus[item.id] ?? "idle"}
                     onQuoteChange={handleQuoteChange}
+                    onSpecificationChange={handleSpecificationChange}
                     onRetry={handleRetry}
                   />
                 ) : (

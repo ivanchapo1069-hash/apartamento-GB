@@ -887,6 +887,47 @@ textarea {
   font-weight: 750;
 }
 
+.spec-editor {
+  margin-top: 6px;
+}
+
+.spec-editor summary {
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.spec-editor-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-top: 8px;
+}
+
+.spec-editor-field > span {
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.spec-editor-field input {
+  width: 100%;
+  min-width: 0;
+  height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  outline: none;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 0.88rem;
+}
+
+.spec-editor-field input:focus {
+  border-color: var(--green);
+}
+
 .quote-editor {
   margin-top: 14px;
   border-top: 1px solid var(--border);

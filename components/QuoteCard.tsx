@@ -17,6 +17,7 @@ interface QuoteCardProps {
   item: ShoppingItem;
   saveStatus: SaveStatus;
   onQuoteChange: (id: number, patch: Partial<QuotePatch>) => void;
+  onSpecificationChange: (id: number, specification: string) => void;
   onRetry: (id: number) => void;
 }
 
@@ -57,8 +58,15 @@ function safeHttpUrl(value: string | null): string | null {
   }
 }
 
-export default function QuoteCard({ item, saveStatus, onQuoteChange, onRetry }: QuoteCardProps) {
+export default function QuoteCard({
+  item,
+  saveStatus,
+  onQuoteChange,
+  onSpecificationChange,
+  onRetry,
+}: QuoteCardProps) {
   const [priceDraft, setPriceDraft] = useState(toPriceInput(item.quote_price));
+  const [specDraft, setSpecDraft] = useState(item.specification ?? "");
   const [imageFailed, setImageFailed] = useState(false);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
@@ -66,6 +74,10 @@ export default function QuoteCard({ item, saveStatus, onQuoteChange, onRetry }: 
   useEffect(() => {
     setPriceDraft(toPriceInput(item.quote_price));
   }, [item.quote_price]);
+
+  useEffect(() => {
+    setSpecDraft(item.specification ?? "");
+  }, [item.specification]);
 
   useEffect(() => {
     setImageFailed(false);
@@ -138,6 +150,22 @@ export default function QuoteCard({ item, saveStatus, onQuoteChange, onRetry }: 
           {!item.specification && item.style_reference && (
             <p className="quote-style-reference">Referência do projeto: {item.style_reference}</p>
           )}
+          <details className="spec-editor">
+            <summary>{item.specification ? "Editar marca/modelo do projeto" : "Definir marca/modelo do projeto"}</summary>
+            <label className="spec-editor-field">
+              <span>Marca / modelo</span>
+              <input
+                type="text"
+                placeholder="Ex.: Tramontina 94869220"
+                value={specDraft}
+                onChange={(event) => setSpecDraft(event.target.value)}
+                onBlur={() => onSpecificationChange(item.id, specDraft)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") event.currentTarget.blur();
+                }}
+              />
+            </label>
+          </details>
           <p className={hasQuote ? "quote-price" : "quote-price is-empty"}>
             {hasQuote ? currency.format(item.quote_price ?? 0) : "Preço pendente"}
           </p>
