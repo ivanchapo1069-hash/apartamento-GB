@@ -3,8 +3,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { sortSections } from "@/lib/sections";
-import type { Decision, FilterKey, SaveStatus, ShoppingItem, UserName } from "@/lib/types";
+import type {
+  AppView,
+  Decision,
+  FilterKey,
+  QuotePatch,
+  SaveStatus,
+  ShoppingItem,
+  UserName,
+} from "@/lib/types";
 import ItemCard from "./ItemCard";
+import QuoteCard from "./QuoteCard";
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "todos", label: "Todos" },
@@ -25,6 +34,7 @@ export default function ShoppingApp() {
   const [filter, setFilter] = useState<FilterKey>("todos");
   const [search, setSearch] = useState("");
   const [saveStatus, setSaveStatus] = useState<Record<number, SaveStatus>>({});
+  const [view, setView] = useState<AppView>("decisoes");
 
   const editingNoteIds = useRef<Set<number>>(new Set());
   const timers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
@@ -99,6 +109,10 @@ export default function ShoppingApp() {
               }
               return prev.map((it) => {
                 if (it.id !== incoming.id) return it;
+                const pendingPatch = pendingPatches.current.get(it.id);
+                if (pendingPatch) {
+                  return { ...incoming, ...pendingPatch };
+                }
                 if (editingNoteIds.current.has(it.id)) {
                   return { ...incoming, note: it.note };
                 }
@@ -184,6 +198,19 @@ export default function ShoppingApp() {
     editingNoteIds.current.delete(id);
   }
 
+  function handleQuoteChange(id: number, quotePatch: Partial<QuotePatch>) {
+    if (!currentUser) return;
+    const now = new Date().toISOString();
+    const patch = {
+      ...quotePatch,
+      quote_checked_at: now,
+      updated_by: currentUser,
+      updated_at: now,
+    };
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+    scheduleSave(id, patch);
+  }
+
   function handleRetry(id: number) {
     if (pendingPatches.current.has(id)) {
       persist(id);
@@ -210,21 +237,36 @@ export default function ShoppingApp() {
     return result;
   }, [items]);
 
+  const quoteSummary = useMemo(() => {
+    const keptItems = items.filter((item) => item.decision === "FICA");
+    const quoted = keptItems.filter(
+      (item) => item.quote_price !== null && item.quote_price !== undefined,
+    );
+    return {
+      totalItems: keptItems.length,
+      quotedItems: quoted.length,
+      pendingItems: keptItems.length - quoted.length,
+      totalPrice: quoted.reduce((total, item) => total + Number(item.quote_price ?? 0), 0),
+    };
+  }, [items]);
+
   const filteredItems = useMemo(() => {
     const term = search.trim().toLowerCase();
     return items.filter((item) => {
       const matchesFilter =
-        filter === "todos" ||
-        (filter === "pendentes" && item.decision === null) ||
-        (filter === "fica" && item.decision === "FICA") ||
-        (filter === "sai" && item.decision === "SAI") ||
-        (filter === "trocar" && item.decision === "TROCAR");
+        view === "cotacoes"
+          ? item.decision === "FICA"
+          : filter === "todos" ||
+            (filter === "pendentes" && item.decision === null) ||
+            (filter === "fica" && item.decision === "FICA") ||
+            (filter === "sai" && item.decision === "SAI") ||
+            (filter === "trocar" && item.decision === "TROCAR");
       if (!matchesFilter) return false;
       if (!term) return true;
       const haystack = `${item.item} ${item.specification ?? ""} ${item.section}`.toLowerCase();
       return haystack.includes(term);
     });
-  }, [items, filter, search]);
+  }, [items, filter, search, view]);
 
   const groupedSections = useMemo(() => {
     const bySection = new Map<string, ShoppingItem[]>();
@@ -276,38 +318,77 @@ export default function ShoppingApp() {
         </button>
       </header>
 
-      <section className="counters-row" aria-label="Resumo">
-        <div className="counter counter--fica">
-          <span className="counter-value">{counters.fica}</span>
-          <span className="counter-label">Fica</span>
-        </div>
-        <div className="counter counter--sai">
-          <span className="counter-value">{counters.sai}</span>
-          <span className="counter-label">Sai</span>
-        </div>
-        <div className="counter counter--trocar">
-          <span className="counter-value">{counters.trocar}</span>
-          <span className="counter-label">Trocar</span>
-        </div>
-        <div className="counter counter--pendentes">
-          <span className="counter-value">{counters.pendentes}</span>
-          <span className="counter-label">Pendentes</span>
-        </div>
-      </section>
+      <nav className="view-switch" aria-label="Etapa da lista">
+        <button
+          type="button"
+          className={view === "decisoes" ? "is-active" : ""}
+          onClick={() => setView("decisoes")}
+        >
+          Decisões
+        </button>
+        <button
+          type="button"
+          className={view === "cotacoes" ? "is-active" : ""}
+          onClick={() => setView("cotacoes")}
+        >
+          Cotações
+        </button>
+      </nav>
+
+      {view === "decisoes" ? (
+        <section className="counters-row" aria-label="Resumo das decisões">
+          <div className="counter counter--fica">
+            <span className="counter-value">{counters.fica}</span>
+            <span className="counter-label">Fica</span>
+          </div>
+          <div className="counter counter--sai">
+            <span className="counter-value">{counters.sai}</span>
+            <span className="counter-label">Sai</span>
+          </div>
+          <div className="counter counter--trocar">
+            <span className="counter-value">{counters.trocar}</span>
+            <span className="counter-label">Trocar</span>
+          </div>
+          <div className="counter counter--pendentes">
+            <span className="counter-value">{counters.pendentes}</span>
+            <span className="counter-label">Pendentes</span>
+          </div>
+        </section>
+      ) : (
+        <section className="quote-summary" aria-label="Resumo das cotações">
+          <div className="quote-summary-total">
+            <span>Total cotado</span>
+            <strong>
+              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                quoteSummary.totalPrice,
+              )}
+            </strong>
+          </div>
+          <div className="quote-summary-counts">
+            <span><strong>{quoteSummary.quotedItems}</strong> cotados</span>
+            <span><strong>{quoteSummary.pendingItems}</strong> pendentes</span>
+          </div>
+        </section>
+      )}
 
       <section className="filters-row">
-        <div className="filter-chips">
-          {FILTERS.map((f) => (
-            <button
-              key={f.key}
-              type="button"
-              className={filter === f.key ? "chip chip-active" : "chip"}
-              onClick={() => setFilter(f.key)}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
+        {view === "cotacoes" && (
+          <p className="quote-list-label">{quoteSummary.totalItems} itens que ficaram</p>
+        )}
+        {view === "decisoes" && (
+          <div className="filter-chips">
+            {FILTERS.map((f) => (
+              <button
+                key={f.key}
+                type="button"
+                className={filter === f.key ? "chip chip-active" : "chip"}
+                onClick={() => setFilter(f.key)}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+        )}
         <input
           className="search-input"
           type="search"
@@ -329,15 +410,25 @@ export default function ShoppingApp() {
             <h2 className="section-title">{section}</h2>
             <div className="section-items">
               {sectionItems.map((item) => (
-                <ItemCard
-                  key={item.id}
-                  item={item}
-                  saveStatus={saveStatus[item.id] ?? "idle"}
-                  onDecision={handleDecision}
-                  onNoteChange={handleNoteChange}
-                  onNoteBlur={handleNoteBlur}
-                  onRetry={handleRetry}
-                />
+                view === "cotacoes" ? (
+                  <QuoteCard
+                    key={item.id}
+                    item={item}
+                    saveStatus={saveStatus[item.id] ?? "idle"}
+                    onQuoteChange={handleQuoteChange}
+                    onRetry={handleRetry}
+                  />
+                ) : (
+                  <ItemCard
+                    key={item.id}
+                    item={item}
+                    saveStatus={saveStatus[item.id] ?? "idle"}
+                    onDecision={handleDecision}
+                    onNoteChange={handleNoteChange}
+                    onNoteBlur={handleNoteBlur}
+                    onRetry={handleRetry}
+                  />
+                )
               ))}
             </div>
           </section>

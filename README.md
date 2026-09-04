@@ -2,10 +2,12 @@
 
 App simples e compartilhado para Ivan e Giovana decidirem, item a item, o que fica, sai ou
 troca na lista de compras do apartamento. Sincroniza em tempo real via Supabase Realtime.
+A etapa de cotações reúne os itens marcados como `FICA` e registra foto, preço, loja e link
+do produto escolhido.
 
 ## Stack
 
-- Next.js 14 (App Router) + TypeScript
+- Next.js 15 (App Router) + TypeScript
 - Supabase (Postgres + Realtime), tabela `public.shopping_items`
 - Sem autenticação tradicional — um código de acesso simples protege a interface (ver abaixo)
 
