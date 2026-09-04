@@ -19,8 +19,20 @@ do produto escolhido.
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Chave anon/publishable (segura para o navegador) |
 | `APP_ACCESS_CODE` | Código que Ivan e Giovana digitam para entrar no app |
 | `SESSION_SECRET` | Segredo aleatório usado para assinar o cookie de sessão |
+| `GEMINI_API_KEY` | Chave da Gemini API, usada só no servidor para a busca automática de preço |
+| `GEMINI_QUOTE_MODEL` | Opcional — modelo Gemini para a busca (padrão `gemini-2.0-flash`) |
 
 Nenhuma dessas variáveis deve conter a `service_role key` do Supabase.
+
+## Cotação automática
+
+Na etapa "Cotações", o botão "Buscar melhor preço" chama `app/api/quote/search/route.ts`, que
+usa a Gemini API com busca do Google (grounding) para procurar o preço atual do item em lojas
+brasileiras conhecidas e devolve preço, loja, link do produto e foto. É uma busca por IA, não
+uma comparação estruturada de preços — pode falhar ou vir impreciso; por isso os campos
+continuam editáveis manualmente, e o botão "Buscar novamente" permite tentar de novo. Sem
+`GEMINI_API_KEY` configurada, o botão retorna erro e a cotação manual continua funcionando
+normalmente.
 
 ## Segurança
 

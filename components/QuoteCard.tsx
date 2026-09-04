@@ -3,6 +3,15 @@
 import { useEffect, useState } from "react";
 import type { QuotePatch, SaveStatus, ShoppingItem } from "@/lib/types";
 
+interface QuoteSearchResponse {
+  ok: boolean;
+  price?: number;
+  store?: string | null;
+  productUrl?: string | null;
+  imageUrl?: string | null;
+  error?: string;
+}
+
 interface QuoteCardProps {
   item: ShoppingItem;
   saveStatus: SaveStatus;
@@ -50,6 +59,8 @@ function safeHttpUrl(value: string | null): string | null {
 export default function QuoteCard({ item, saveStatus, onQuoteChange, onRetry }: QuoteCardProps) {
   const [priceDraft, setPriceDraft] = useState(toPriceInput(item.quote_price));
   const [imageFailed, setImageFailed] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState("");
 
   useEffect(() => {
     setPriceDraft(toPriceInput(item.quote_price));
@@ -63,6 +74,37 @@ export default function QuoteCard({ item, saveStatus, onQuoteChange, onRetry }: 
     const price = parsePrice(priceDraft);
     setPriceDraft(toPriceInput(price));
     onQuoteChange(item.id, { quote_price: price });
+  }
+
+  async function handleAutoSearch() {
+    setSearching(true);
+    setSearchError("");
+    try {
+      const response = await fetch("/api/quote/search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          item: item.item,
+          specification: item.specification ?? "",
+          section: item.section,
+        }),
+      });
+      const data: QuoteSearchResponse = await response.json();
+      if (!response.ok || !data.ok || typeof data.price !== "number") {
+        setSearchError(data.error || "Não encontramos um preço confiável.");
+        return;
+      }
+      onQuoteChange(item.id, {
+        quote_price: data.price,
+        quote_store: data.store ?? null,
+        quote_product_url: data.productUrl ?? null,
+        quote_image_url: data.imageUrl ?? null,
+      });
+    } catch {
+      setSearchError("Erro ao buscar o preço. Tente novamente.");
+    } finally {
+      setSearching(false);
+    }
   }
 
   const hasQuote = item.quote_price !== null && item.quote_price !== undefined;
@@ -101,6 +143,15 @@ export default function QuoteCard({ item, saveStatus, onQuoteChange, onRetry }: 
               Ver produto
             </a>
           )}
+          <button
+            type="button"
+            className="quote-auto-search-btn"
+            onClick={handleAutoSearch}
+            disabled={searching}
+          >
+            {searching ? "Buscando..." : hasQuote ? "Buscar novamente" : "Buscar melhor preço"}
+          </button>
+          {searchError && <p className="quote-search-error">{searchError}</p>}
         </div>
       </div>
 

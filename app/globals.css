@@ -755,6 +755,30 @@ textarea {
   text-underline-offset: 2px;
 }
 
+.quote-auto-search-btn {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--green-soft-border);
+  border-radius: 999px;
+  background: var(--green-soft-bg);
+  color: var(--green);
+  font-size: 0.74rem;
+  font-weight: 750;
+}
+
+.quote-auto-search-btn:disabled {
+  opacity: 0.6;
+}
+
+.quote-search-error {
+  margin: 6px 0 0;
+  color: var(--red);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
 .quote-editor {
   margin-top: 14px;
   border-top: 1px solid var(--border);
