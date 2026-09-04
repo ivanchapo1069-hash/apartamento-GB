@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { QuotePatch, SaveStatus, ShoppingItem } from "@/lib/types";
+import SuggestionsList from "./SuggestionsList";
 
 interface QuoteSearchResponse {
   ok: boolean;
@@ -134,6 +135,9 @@ export default function QuoteCard({ item, saveStatus, onQuoteChange, onRetry }: 
           <p className="quote-section">{item.section}</p>
           <h3>{item.item}</h3>
           {item.specification && <p className="quote-spec">{item.specification}</p>}
+          {!item.specification && item.style_reference && (
+            <p className="quote-style-reference">Referência do projeto: {item.style_reference}</p>
+          )}
           <p className={hasQuote ? "quote-price" : "quote-price is-empty"}>
             {hasQuote ? currency.format(item.quote_price ?? 0) : "Preço pendente"}
           </p>
@@ -152,6 +156,7 @@ export default function QuoteCard({ item, saveStatus, onQuoteChange, onRetry }: 
             {searching ? "Buscando..." : hasQuote ? "Buscar novamente" : "Buscar melhor preço"}
           </button>
           {searchError && <p className="quote-search-error">{searchError}</p>}
+          <SuggestionsList itemId={item.id} />
         </div>
       </div>
 

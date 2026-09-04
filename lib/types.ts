@@ -5,6 +5,7 @@ export interface ShoppingItem {
   section: string;
   item: string;
   specification: string | null;
+  style_reference: string | null;
   decision: Decision;
   note: string | null;
   quote_image_url: string | null;
@@ -14,6 +15,17 @@ export interface ShoppingItem {
   quote_checked_at: string | null;
   updated_by: string | null;
   updated_at: string;
+}
+
+export interface ItemSuggestion {
+  id: number;
+  shopping_item_id: number;
+  price: number | null;
+  store: string | null;
+  product_url: string | null;
+  image_url: string | null;
+  label: string | null;
+  created_at: string;
 }
 
 export type UserName = "Ivan" | "Giovana";

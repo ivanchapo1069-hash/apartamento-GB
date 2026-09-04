@@ -779,6 +779,114 @@ textarea {
   font-weight: 600;
 }
 
+.quote-style-reference {
+  margin: 4px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+  font-style: italic;
+  line-height: 1.35;
+}
+
+.suggestions-block {
+  margin-top: 10px;
+}
+
+.suggestions-toggle {
+  border: none;
+  background: none;
+  padding: 0;
+  color: var(--green);
+  font-size: 0.76rem;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.suggestions-body {
+  margin-top: 8px;
+}
+
+.suggestions-status {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+}
+
+.suggestions-status--error {
+  color: var(--red);
+}
+
+.suggestions-list {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.suggestion-card {
+  flex-shrink: 0;
+  width: 132px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px;
+  background: var(--paper);
+}
+
+.suggestion-image-wrap,
+.suggestion-image,
+.suggestion-image-placeholder {
+  width: 100%;
+  height: 88px;
+  border-radius: 8px;
+}
+
+.suggestion-image {
+  object-fit: cover;
+  display: block;
+}
+
+.suggestion-image-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card);
+  color: var(--ink-soft);
+  font-size: 0.66rem;
+}
+
+.suggestion-info {
+  margin-top: 6px;
+}
+
+.suggestion-label {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.suggestion-price {
+  margin: 3px 0 0;
+  color: var(--green);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+
+.suggestion-store {
+  margin: 1px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.68rem;
+}
+
+.suggestion-link {
+  display: inline-block;
+  margin-top: 4px;
+  color: var(--green);
+  font-size: 0.7rem;
+  font-weight: 750;
+}
+
 .quote-editor {
   margin-top: 14px;
   border-top: 1px solid var(--border);
