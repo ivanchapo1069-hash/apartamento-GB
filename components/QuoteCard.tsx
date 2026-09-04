@@ -58,6 +58,16 @@ function safeHttpUrl(value: string | null): string | null {
   }
 }
 
+// Fotos coladas manualmente (print recortado) vêm como data URI em vez de link —
+// seguro num <img src>, ao contrário de um <a href>, então tem validação própria.
+function safeImageUrl(value: string | null): string | null {
+  if (!value) return null;
+  if (/^data:image\/(png|jpe?g|webp|gif);base64,[a-zA-Z0-9+/]+=*$/.test(value)) {
+    return value;
+  }
+  return safeHttpUrl(value);
+}
+
 export default function QuoteCard({
   item,
   saveStatus,
@@ -121,7 +131,7 @@ export default function QuoteCard({
   }
 
   const hasQuote = item.quote_price !== null && item.quote_price !== undefined;
-  const imageUrl = safeHttpUrl(item.quote_image_url);
+  const imageUrl = safeImageUrl(item.quote_image_url);
   const productUrl = safeHttpUrl(item.quote_product_url);
 
   return (
