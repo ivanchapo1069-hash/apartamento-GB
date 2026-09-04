@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: "Item não informado." }, { status: 400 });
   }
 
-  const model = process.env.GEMINI_QUOTE_MODEL || "gemini-2.0-flash";
+  const model = process.env.GEMINI_QUOTE_MODEL || "gemini-3.6-flash";
   const prompt = [
     "Você é um assistente de compras que busca preços reais e atuais no Brasil.",
     "",

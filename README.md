@@ -20,7 +20,7 @@ do produto escolhido.
 | `APP_ACCESS_CODE` | Código que Ivan e Giovana digitam para entrar no app |
 | `SESSION_SECRET` | Segredo aleatório usado para assinar o cookie de sessão |
 | `GEMINI_API_KEY` | Chave da Gemini API, usada só no servidor para a busca automática de preço |
-| `GEMINI_QUOTE_MODEL` | Opcional — modelo Gemini para a busca (padrão `gemini-2.0-flash`) |
+| `GEMINI_QUOTE_MODEL` | Opcional — modelo Gemini para a busca (padrão `gemini-3.6-flash`) |
 
 Nenhuma dessas variáveis deve conter a `service_role key` do Supabase.
 
