@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PUBLIC_PATHS = new Set(["/login", "/api/login"]);
+// /api/quote/fetch-image fica pública de propósito: só extrai a foto de uma
+// URL de produto e grava o link da imagem (nunca preço/decisão), e é chamada
+// pela rotina diária em segundo plano, que não tem cookie de sessão de navegador.
+const PUBLIC_PATHS = new Set(["/login", "/api/login", "/api/quote/fetch-image"]);
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
