@@ -271,7 +271,7 @@ textarea {
 
 .view-switch {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 4px;
   margin: 2px 16px 14px;
   padding: 4px;
@@ -1036,4 +1036,512 @@ textarea {
   .quote-fields {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
+
+/* ---------- obra: contratos e pagamentos ---------- */
+
+.obra-resumo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  margin: 0 16px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  overflow: hidden;
+}
+
+.obra-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.obra-tile:nth-child(odd) { border-right: 1px solid var(--border); }
+.obra-tile:nth-child(3),
+.obra-tile:nth-child(4) { border-bottom: none; }
+
+.obra-tile-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.obra-tile-value {
+  font-size: 1.1rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.obra-tile-sub { font-size: 0.74rem; color: var(--ink-soft); }
+.obra-tile--pago .obra-tile-value { color: var(--green); }
+.obra-tile--vencido .obra-tile-value { color: var(--red); }
+.obra-tile--vencido.is-zero .obra-tile-value { color: var(--ink-soft); }
+
+.obra-filtros {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 0 16px 12px;
+  scrollbar-width: thin;
+}
+
+.obra-filtro {
+  flex: 0 0 auto;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--ink-soft);
+  border-radius: 999px;
+  padding: 7px 13px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.obra-filtro[aria-pressed="true"] {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+.obra-filtro .cnt {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.75rem;
+  opacity: 0.72;
+  margin-left: 5px;
+}
+
+.obra-agenda-bloco {
+  margin: 0 16px 14px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.obra-bloco-titulo {
+  margin: 0 0 8px;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.obra-agenda { list-style: none; margin: 0; padding: 0; }
+
+.obra-agenda li {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.obra-agenda li:last-child { border-bottom: none; }
+
+.obra-ag-data {
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+
+.obra-agenda li.atrasado .obra-ag-data { color: var(--red); }
+.obra-ag-quem { font-size: 0.86rem; min-width: 0; }
+.obra-ag-quem small { display: block; color: var(--ink-soft); font-size: 0.76rem; }
+
+.obra-ag-valor {
+  font-size: 0.88rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.obra-agenda-total {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 2px solid var(--border);
+  font-size: 0.84rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.obra-novo-linha { padding: 0 16px 14px; }
+
+.obra-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 16px 28px;
+}
+
+.obra-contrato {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.obra-contrato.tem-atraso { border-color: var(--red-soft-border); }
+.obra-contrato.is-cancelado { opacity: 0.6; }
+
+.obra-contrato-topo {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 14px 15px 12px;
+}
+
+.obra-contrato-id { display: flex; flex-direction: column; gap: 3px; }
+
+.obra-contrato-cat {
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.obra-contrato-nome {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.obra-contrato-escopo { margin: 0; font-size: 0.83rem; color: var(--ink-soft); }
+
+.obra-contrato-cond {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  background: var(--paper);
+  border-radius: var(--radius-md);
+  padding: 7px 10px;
+}
+
+.obra-contrato-cond b { color: var(--ink); }
+
+.obra-barra-linha { display: flex; flex-direction: column; gap: 6px; }
+
+.obra-barra-texto {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+
+.obra-barra-texto .val {
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.obra-barra {
+  height: 7px;
+  background: var(--paper);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.obra-barra > i {
+  display: block;
+  height: 100%;
+  background: var(--green);
+  border-radius: 4px;
+}
+
+.obra-alerta {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--amber);
+  background: var(--amber-soft-bg);
+  border: 1px solid var(--amber-soft-border);
+  border-radius: var(--radius-md);
+  padding: 7px 10px;
+}
+
+.obra-parcelas { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--border); }
+
+.obra-parcela {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  padding: 11px 15px;
+  border-bottom: 1px solid var(--border);
+}
+
+.obra-parcela:last-child { border-bottom: none; }
+
+.obra-parcela--vazia {
+  display: block;
+  font-size: 0.83rem;
+  color: var(--ink-soft);
+  text-align: center;
+  padding: 16px;
+}
+
+.obra-p-desc { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+.obra-p-num {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+
+.obra-p-titulo { font-size: 0.9rem; font-weight: 650; }
+.obra-p-gatilho { font-size: 0.77rem; color: var(--ink-soft); }
+.obra-p-gatilho .marco::before { content: "\25C7 "; }
+.obra-p-gatilho .data::before { content: "\25AA "; }
+
+.obra-p-valor {
+  font-size: 0.93rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.obra-p-rodape {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin-top: 4px;
+}
+
+.obra-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.obra-chip--pago { background: var(--green-soft-bg); border-color: var(--green-soft-border); color: var(--green); }
+.obra-chip--atrasado { background: var(--red-soft-bg); border-color: var(--red-soft-border); color: var(--red); }
+.obra-chip--proximo { background: var(--amber-soft-bg); border-color: var(--amber-soft-border); color: var(--amber); }
+.obra-chip--aguardando { background: #eaf1f4; border-color: #c6dbe3; color: #2f4d5c; }
+.obra-chip--avencer { background: var(--paper); border-color: var(--border); color: var(--ink-soft); }
+
+.obra-p-meta {
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.obra-p-link { color: var(--green); text-decoration: underline; }
+
+.obra-p-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.obra-btn {
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 0.83rem;
+  font-weight: 700;
+  min-height: 38px;
+}
+
+.obra-btn--mini { padding: 5px 11px; font-size: 0.76rem; min-height: 32px; }
+
+.obra-btn--primario {
+  background: var(--green);
+  border-color: var(--green);
+  color: #fff;
+}
+
+.obra-btn--perigo {
+  background: var(--red-soft-bg);
+  border-color: var(--red-soft-border);
+  color: var(--red);
+}
+
+.obra-btn:disabled { opacity: 0.55; }
+
+.obra-pagamento,
+.obra-editor,
+.obra-form {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 12px;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.obra-form {
+  margin: 0 16px 14px;
+  padding: 15px;
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+}
+
+.obra-form-titulo { margin: 0; font-size: 1rem; font-weight: 750; }
+
+.obra-campo { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+
+.obra-campo > span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.obra-campo input,
+.obra-campo select,
+.obra-campo textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--ink);
+  padding: 10px 12px;
+  font-size: 0.92rem;
+  font-family: inherit;
+}
+
+.obra-campo textarea { resize: vertical; }
+
+.obra-campo-linha {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.obra-gatilho {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 12px;
+  margin: 0;
+}
+
+.obra-gatilho legend {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding: 0 4px;
+}
+
+.obra-gatilho label,
+.obra-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+}
+
+.obra-parcelamento {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--paper);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.obra-previa {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  padding: 10px 12px;
+}
+
+.obra-previa-titulo {
+  margin: 0 0 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.obra-previa ul { list-style: none; margin: 0; padding: 0; }
+
+.obra-previa li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 10px;
+  padding: 4px 0;
+  font-size: 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.obra-previa li:last-child { border-bottom: none; }
+.obra-previa-data,
+.obra-previa-valor { font-variant-numeric: tabular-nums; color: var(--ink-soft); }
+.obra-previa-valor { font-weight: 650; color: var(--ink); }
+
+.obra-editor-acoes { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+
+.obra-dica { margin: 0; font-size: 0.77rem; color: var(--ink-soft); line-height: 1.45; }
+
+.obra-erro {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 650;
+  color: var(--red);
+}
+
+.obra-erro--card { padding: 0 15px 10px; }
+
+.obra-contrato-rodape { padding: 0 15px 12px; }
+
+.obra-contrato-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  padding: 11px 15px;
+  border-top: 1px solid var(--border);
+  background: var(--paper);
+}
+
+.obra-vazio {
+  padding: 22px 16px;
+  text-align: center;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  background: var(--card);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.obra-vazio p { margin: 0 0 8px; }
+.obra-vazio p:last-child { margin-bottom: 0; }
+
+@media (min-width: 560px) {
+  .obra-resumo { grid-template-columns: repeat(4, 1fr); }
+  .obra-tile { border-bottom: none; border-right: 1px solid var(--border); }
+  .obra-tile:last-child { border-right: none; }
 }

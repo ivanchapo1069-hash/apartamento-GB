@@ -13,6 +13,7 @@ import type {
   UserName,
 } from "@/lib/types";
 import ItemCard from "./ItemCard";
+import ObraApp from "./ObraApp";
 import QuoteCard from "./QuoteCard";
 
 const FILTERS: { key: FilterKey; label: string }[] = [
@@ -345,7 +346,16 @@ export default function ShoppingApp() {
         >
           Cotações
         </button>
+        <button
+          type="button"
+          className={view === "obra" ? "is-active" : ""}
+          onClick={() => setView("obra")}
+        >
+          Obra
+        </button>
       </nav>
+
+      {view === "obra" && <ObraApp currentUser={currentUser} />}
 
       {view === "decisoes" ? (
         <section className="counters-row" aria-label="Resumo das decisões">
@@ -366,7 +376,7 @@ export default function ShoppingApp() {
             <span className="counter-label">Pendentes</span>
           </div>
         </section>
-      ) : (
+      ) : view === "cotacoes" ? (
         <section className="quote-summary" aria-label="Resumo das cotações">
           <div className="quote-summary-total">
             <span>Total cotado</span>
@@ -381,8 +391,9 @@ export default function ShoppingApp() {
             <span><strong>{quoteSummary.pendingItems}</strong> pendentes</span>
           </div>
         </section>
-      )}
+      ) : null}
 
+      {view !== "obra" && (
       <section className="filters-row">
         {view === "cotacoes" && (
           <p className="quote-list-label">{quoteSummary.totalItems} itens que ficaram</p>
@@ -409,13 +420,17 @@ export default function ShoppingApp() {
           onChange={(event) => setSearch(event.target.value)}
         />
       </section>
+      )}
 
-      {loading && <p className="status-message">Carregando itens...</p>}
-      {loadError && <p className="status-message status-message--error">{loadError}</p>}
-      {!loading && !loadError && filteredItems.length === 0 && (
+      {view !== "obra" && loading && <p className="status-message">Carregando itens...</p>}
+      {view !== "obra" && loadError && (
+        <p className="status-message status-message--error">{loadError}</p>
+      )}
+      {view !== "obra" && !loading && !loadError && filteredItems.length === 0 && (
         <p className="status-message">Nenhum item encontrado.</p>
       )}
 
+      {view !== "obra" && (
       <div className="sections-list">
         {groupedSections.map(({ section, items: sectionItems }) => (
           <section key={section} className="section-block">
@@ -447,6 +462,7 @@ export default function ShoppingApp() {
           </section>
         ))}
       </div>
+      )}
     </main>
   );
 }

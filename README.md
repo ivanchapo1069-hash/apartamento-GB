@@ -1,14 +1,18 @@
 # Compras — Apartamento GB
 
-App simples e compartilhado para Ivan e Giovana decidirem, item a item, o que fica, sai ou
-troca na lista de compras do apartamento. Sincroniza em tempo real via Supabase Realtime.
-A etapa de cotações reúne os itens marcados como `FICA` e registra foto, preço, loja e link
-do produto escolhido.
+App simples e compartilhado para Ivan e Giovana tocarem o apartamento: decidir o que fica,
+cotar o que ficou e acompanhar os contratos e pagamentos da obra. Sincroniza em tempo real
+via Supabase Realtime.
+
+- **Decisões** — item a item, o que fica, sai ou troca.
+- **Cotações** — os itens marcados como `FICA`, com foto, preço, loja e link do produto.
+- **Obra** — contratos de serviço (arquiteta, marcenaria, empreiteiro) e suas parcelas.
 
 ## Stack
 
 - Next.js 15 (App Router) + TypeScript
-- Supabase (Postgres + Realtime), tabela `public.shopping_items`
+- Supabase (Postgres + Realtime), tabelas `public.shopping_items`, `public.obra_contratos`
+  e `public.obra_parcelas`
 - Sem autenticação tradicional — um código de acesso simples protege a interface (ver abaixo)
 
 ## Variáveis de ambiente
@@ -34,10 +38,35 @@ continuam editáveis manualmente, e o botão "Buscar novamente" permite tentar d
 `GEMINI_API_KEY` configurada, o botão retorna erro e a cotação manual continua funcionando
 normalmente.
 
+## Acompanhamento de obra
+
+A aba "Obra" controla contratos de serviço e o pagamento de cada parcela.
+
+**A decisão que sustenta o resto: não existe campo "status" na parcela.** O banco guarda
+fatos — `pago_em`, `vencimento`, `marco_entregue_em` — e `lib/obra.ts` deriva o estado na
+hora de exibir (`statusParcela`). Um campo gravado com "atrasado" ficaria velho no dia
+seguinte e dependeria de alguém lembrar de atualizar; assim a tela nunca mente.
+
+Parcela tem dois gatilhos possíveis:
+
+| Gatilho | Quando vence |
+| --- | --- |
+| `data` | Na data fixa em `vencimento`, como no contrato |
+| `marco` | Só depois que a entrega acontece: `marco_entregue_em + prazo_dias` |
+
+Enquanto o marco não é marcado como entregue, a parcela fica "aguardando entrega" e **não
+conta como atraso** — é o caso de "30% na entrega do projeto executivo", que não tem data
+até a arquiteta entregar.
+
+Fora de escopo por enquanto, porque cada um é mais um campo para manter atualizado: aditivo
+de contrato, retenção técnica, reajuste por índice e rateio entre as duas pessoas.
+
 ## Segurança
 
-As policies de RLS da tabela liberam SELECT e UPDATE para o papel `anon`, sem outra
-restrição — é o desenho pedido para o app funcionar sem autenticação tradicional. Como isso
+As policies de RLS liberam as operações para o papel `anon`, sem outra restrição — é o
+desenho pedido para o app funcionar sem autenticação tradicional. As tabelas de obra seguem
+o mesmo padrão das `shopping_items`, incluindo DELETE, porque o app precisa excluir
+contratos e parcelas. Como isso
 por si só deixaria a tabela editável por qualquer pessoa que descobrisse a URL do Supabase e a
 chave anon (visível no bundle do navegador), o app adiciona uma trava simples e apropriada
 para uso familiar: toda a interface fica atrás de um código de acesso (`APP_ACCESS_CODE`),
