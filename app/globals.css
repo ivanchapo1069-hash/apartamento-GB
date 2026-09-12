@@ -271,8 +271,8 @@ textarea {
 
 .view-switch {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
   margin: 2px 16px 14px;
   padding: 4px;
   border: 1px solid var(--border);
@@ -282,12 +282,14 @@ textarea {
 
 .view-switch button {
   min-height: 42px;
+  padding: 0 2px;
   border: none;
   border-radius: 10px;
   background: transparent;
   color: var(--ink-soft);
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   font-weight: 750;
+  letter-spacing: -0.01em;
 }
 
 .view-switch button.is-active {
@@ -1545,3 +1547,131 @@ textarea {
   .obra-tile { border-bottom: none; border-right: 1px solid var(--border); }
   .obra-tile:last-child { border-right: none; }
 }
+
+/* ---------- orçamento ---------- */
+
+.orc-aviso {
+  margin: 0 16px 12px;
+  padding: 11px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  font-size: 0.83rem;
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+.orc-aviso b { color: var(--ink); font-weight: 700; }
+
+.orc-aviso--neutro { background: var(--card); }
+
+.orc-aviso--atencao {
+  background: var(--amber-soft-bg);
+  border-color: var(--amber-soft-border);
+  color: var(--amber);
+}
+
+.orc-aviso--atencao b { color: var(--amber); }
+
+.orc-aviso--alerta {
+  background: var(--red-soft-bg);
+  border-color: var(--red-soft-border);
+  color: var(--red);
+}
+
+.orc-aviso--alerta b { color: var(--red); }
+
+.orc-bloco {
+  margin: 0 16px 14px;
+  padding: 14px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.orc-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.orc-tabela th {
+  text-align: right;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding: 0 0 6px;
+}
+
+.orc-tabela th:first-child { text-align: left; }
+.orc-tabela th + th,
+.orc-tabela td + td { padding-left: 12px; }
+
+.orc-tabela td {
+  padding: 8px 0;
+  border-top: 1px solid var(--border);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.orc-tabela td:first-child {
+  text-align: left;
+  white-space: normal;
+  color: var(--ink-soft);
+  padding-right: 10px;
+}
+
+.orc-tabela tfoot td {
+  border-top: 2px solid var(--border);
+  font-weight: 750;
+}
+
+.orc-tabela tfoot td:first-child { color: var(--ink); }
+
+.orc-nota {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--ink-soft);
+  opacity: 0.8;
+}
+
+.orc-entradas { list-style: none; margin: 0; padding: 0; }
+
+.orc-entrada {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px 10px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.orc-entrada:last-child { border-bottom: none; }
+.orc-entrada-desc { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+
+/* ---------- compra efetiva na aba Cotações ---------- */
+
+.compra-bloco {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 0 0;
+  border-top: 1px solid var(--border);
+  margin-top: 10px;
+}
+
+.compra-feita {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.compra-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.compra-form .obra-editor-acoes { grid-column: 1 / -1; }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { QuotePatch, SaveStatus, ShoppingItem } from "@/lib/types";
+import type { ComprasPatch, QuotePatch, SaveStatus, ShoppingItem } from "@/lib/types";
 import SuggestionsList from "./SuggestionsList";
 
 interface QuoteSearchResponse {
@@ -18,6 +18,7 @@ interface QuoteCardProps {
   saveStatus: SaveStatus;
   onQuoteChange: (id: number, patch: Partial<QuotePatch>) => void;
   onSpecificationChange: (id: number, specification: string) => void;
+  onComprasChange: (id: number, patch: Partial<ComprasPatch>) => void;
   onRetry: (id: number) => void;
 }
 
@@ -28,7 +29,11 @@ const currency = new Intl.NumberFormat("pt-BR", {
 
 function toPriceInput(value: number | null): string {
   if (value === null || value === undefined) return "";
-  return value.toFixed(2).replace(".", ",");
+  // O Postgres pode devolver numeric como string dependendo do driver; Number()
+  // deixa o campo funcionar nos dois casos em vez de quebrar o card.
+  const numero = Number(value);
+  if (!Number.isFinite(numero)) return "";
+  return numero.toFixed(2).replace(".", ",");
 }
 
 function parsePrice(value: string): number | null {
@@ -46,6 +51,13 @@ function parsePrice(value: string): number | null {
       })();
   const parsed = Number(normalized);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+}
+
+function hojeLocalISO(): string {
+  const agora = new Date();
+  const mes = String(agora.getMonth() + 1).padStart(2, "0");
+  const dia = String(agora.getDate()).padStart(2, "0");
+  return `${agora.getFullYear()}-${mes}-${dia}`;
 }
 
 function safeHttpUrl(value: string | null): string | null {
@@ -73,6 +85,7 @@ export default function QuoteCard({
   saveStatus,
   onQuoteChange,
   onSpecificationChange,
+  onComprasChange,
   onRetry,
 }: QuoteCardProps) {
   const [priceDraft, setPriceDraft] = useState(toPriceInput(item.quote_price));
@@ -80,6 +93,15 @@ export default function QuoteCard({
   const [imageFailed, setImageFailed] = useState(false);
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState("");
+  const [comprando, setComprando] = useState(false);
+  const [dataCompra, setDataCompra] = useState(hojeLocalISO());
+  const [valorCompra, setValorCompra] = useState(toPriceInput(item.quote_price));
+
+  // Positivo = pagou menos que o cotado.
+  const diferencaCompra =
+    item.comprado_em && item.quote_price !== null && item.valor_pago !== null
+      ? Number(item.quote_price) - Number(item.valor_pago)
+      : null;
 
   useEffect(() => {
     setPriceDraft(toPriceInput(item.quote_price));
@@ -251,6 +273,84 @@ export default function QuoteCard({
           </label>
         </div>
       </details>
+
+      <div className="compra-bloco">
+        {item.comprado_em ? (
+          <div className="compra-feita">
+            <span className="obra-chip obra-chip--pago">
+              Comprado {new Date(`${item.comprado_em}T12:00:00`).toLocaleDateString("pt-BR", {
+                day: "2-digit",
+                month: "2-digit",
+              })}
+            </span>
+            <span className="obra-p-meta">
+              {currency.format(Number(item.valor_pago ?? item.quote_price ?? 0))}
+              {diferencaCompra !== null &&
+                Math.abs(diferencaCompra) >= 0.01 &&
+                ` · ${diferencaCompra > 0 ? "economizou" : "passou"} ${currency.format(
+                  Math.abs(diferencaCompra),
+                )}`}
+            </span>
+            <button
+              type="button"
+              className="obra-btn obra-btn--mini"
+              onClick={() => onComprasChange(item.id, { comprado_em: null, valor_pago: null })}
+            >
+              Desfazer
+            </button>
+          </div>
+        ) : comprando ? (
+          <div className="compra-form">
+            <label className="obra-campo">
+              <span>Data da compra</span>
+              <input
+                type="date"
+                value={dataCompra}
+                onChange={(event) => setDataCompra(event.target.value)}
+              />
+            </label>
+            <label className="obra-campo">
+              <span>Valor pago</span>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={valorCompra}
+                onChange={(event) => setValorCompra(event.target.value)}
+                placeholder="0,00"
+              />
+            </label>
+            <div className="obra-editor-acoes">
+              <button type="button" className="obra-btn obra-btn--mini" onClick={() => setComprando(false)}>
+                Cancelar
+              </button>
+              <button
+                type="button"
+                className="obra-btn obra-btn--mini obra-btn--primario"
+                onClick={() => {
+                  const pago = parsePrice(valorCompra);
+                  if (!dataCompra) return;
+                  onComprasChange(item.id, { comprado_em: dataCompra, valor_pago: pago });
+                  setComprando(false);
+                }}
+              >
+                Confirmar compra
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="obra-btn obra-btn--mini"
+            onClick={() => {
+              setDataCompra(hojeLocalISO());
+              setValorCompra(toPriceInput(item.quote_price));
+              setComprando(true);
+            }}
+          >
+            Marcar como comprado
+          </button>
+        )}
+      </div>
 
       <div className="item-footer quote-footer">
         <span className="item-updated">

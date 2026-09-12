@@ -7,12 +7,13 @@ via Supabase Realtime.
 - **Decisões** — item a item, o que fica, sai ou troca.
 - **Cotações** — os itens marcados como `FICA`, com foto, preço, loja e link do produto.
 - **Obra** — contratos de serviço (arquiteta, marcenaria, empreiteiro) e suas parcelas.
+- **Orçamento** — de onde vem o dinheiro, quanto já saiu e se sobra ou estoura no fim.
 
 ## Stack
 
 - Next.js 15 (App Router) + TypeScript
-- Supabase (Postgres + Realtime), tabelas `public.shopping_items`, `public.obra_contratos`
-  e `public.obra_parcelas`
+- Supabase (Postgres + Realtime), tabelas `public.shopping_items`, `public.obra_contratos`,
+  `public.obra_parcelas` e `public.orcamento_entradas`
 - Sem autenticação tradicional — um código de acesso simples protege a interface (ver abaixo)
 
 ## Variáveis de ambiente
@@ -61,12 +62,41 @@ até a arquiteta entregar.
 Fora de escopo por enquanto, porque cada um é mais um campo para manter atualizado: aditivo
 de contrato, retenção técnica, reajuste por índice e rateio entre as duas pessoas.
 
+## Orçamento
+
+A aba "Orçamento" junta o dinheiro que estava espalhado em três lugares que não se falavam:
+contratos de obra, itens de compra cotados e iluminação.
+
+| Número | Fórmula | O que responde |
+| --- | --- | --- |
+| Orçamento | entradas recebidas + previstas | Quanto existe no total |
+| Realizado | parcelas pagas + itens comprados | Quanto já saiu da conta |
+| Saldo real | entradas recebidas − realizado | Quanto tem hoje, de verdade |
+| Projetado | orçamento − (realizado + comprometido) | Sobra ou estoura no fim |
+
+Duas regras sustentam a honestidade dessas contas:
+
+**Cotado não é comprado.** `shopping_items.comprado_em` e `valor_pago` registram a compra
+efetiva. Enquanto o item está só cotado ele conta como *comprometido*, nunca como *realizado*.
+Quando o pago difere do cotado, o card mostra quanto se economizou ou estourou.
+
+**O que não se sabe nunca vira zero.** Itens que ficam mas ainda não têm preço aparecem como
+um aviso próprio ("12 itens ainda sem cotação") e ficam **fora de todas as somas**. Um
+projetado que trata buraco como R$ 0 mente a favor de quem lê.
+
+A entrada segue o mesmo desenho da parcela: só `recebido_em` é gravado; previsto e atrasado
+são derivados em `lib/orcamento.ts`. Entrada prevista entra no orçamento total e na projeção,
+mas fica de fora do saldo real — saldo só considera dinheiro que já existe na conta.
+
+Iluminação entra nas contas como comprometido, mas ainda não tem tela no app, então não há
+como marcá-la como comprada pela interface. A tabela mostra isso explicitamente.
+
 ## Segurança
 
 As policies de RLS liberam as operações para o papel `anon`, sem outra restrição — é o
-desenho pedido para o app funcionar sem autenticação tradicional. As tabelas de obra seguem
-o mesmo padrão das `shopping_items`, incluindo DELETE, porque o app precisa excluir
-contratos e parcelas. Como isso
+desenho pedido para o app funcionar sem autenticação tradicional. As tabelas de obra e de
+orçamento seguem o mesmo padrão das `shopping_items`, incluindo DELETE, porque o app precisa
+excluir contratos, parcelas e entradas. Como isso
 por si só deixaria a tabela editável por qualquer pessoa que descobrisse a URL do Supabase e a
 chave anon (visível no bundle do navegador), o app adiciona uma trava simples e apropriada
 para uso familiar: toda a interface fica atrás de um código de acesso (`APP_ACCESS_CODE`),
