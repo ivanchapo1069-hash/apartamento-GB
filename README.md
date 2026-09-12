@@ -50,6 +50,14 @@ fatos — `pago_em`, `vencimento`, `marco_entregue_em` — e `lib/obra.ts` deriv
 hora de exibir (`statusParcela`). Um campo gravado com "atrasado" ficaria velho no dia
 seguinte e dependeria de alguém lembrar de atualizar; assim a tela nunca mente.
 
+Cada contrato é um bloco que abre e fecha: fechado mostra fornecedor, progresso e uma linha de
+resumo ("2 de 8 pagas · próxima 10/10"); aberto mostra as parcelas. Contratos com parcela
+atrasada abrem sozinhos, e um filtro ativo também força a abertura — esconder parcelas ali
+anularia o próprio filtro. A escolha de cada card fica no `localStorage`.
+
+Nas parcelas, só a ação daquela linha fica à vista ("Marcar pago" ou "Marco entregue"). Editar,
+excluir e desfazer vivem atrás do `•••`: são raras e ocupavam mais altura que os próprios dados.
+
 Parcela tem dois gatilhos possíveis:
 
 | Gatilho | Quando vence |
