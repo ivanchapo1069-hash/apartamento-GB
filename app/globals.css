@@ -1932,3 +1932,13 @@ textarea {
     margin: 14mm;
   }
 }
+
+.rel-aviso-pdf {
+  margin: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--amber-soft-border);
+  background: var(--amber-soft-bg);
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  color: var(--amber);
+}

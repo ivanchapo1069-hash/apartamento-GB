@@ -10,6 +10,7 @@ import {
   dataPorExtenso,
   pagamentosRealizados,
 } from "@/lib/relatorio";
+import { gerarPdfRelatorio, nomeArquivoRelatorio } from "@/lib/pdfRelatorio";
 import type {
   IluminacaoCotacao,
   IluminacaoItem,
@@ -31,6 +32,20 @@ export default function RelatorioView() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [emitidoPor, setEmitidoPor] = useState("");
+  const [gerando, setGerando] = useState(false);
+  const [avisoPdf, setAvisoPdf] = useState("");
+  const [podeCompartilhar, setPodeCompartilhar] = useState(false);
+
+  // A folha de compartilhamento do sistema (onde mora o WhatsApp) só aceita
+  // arquivo em navegador com Web Share nível 2. Onde não houver, o botão baixa.
+  useEffect(() => {
+    try {
+      const teste = new File(["teste"], "teste.pdf", { type: "application/pdf" });
+      setPodeCompartilhar(Boolean(navigator.canShare?.({ files: [teste] })));
+    } catch {
+      setPodeCompartilhar(false);
+    }
+  }, []);
 
   const hoje = hojeISO();
 
@@ -92,6 +107,56 @@ export default function RelatorioView() {
   const recebidas = entradas.filter((e) => e.recebido_em);
   const previstas = entradas.filter((e) => !e.recebido_em);
 
+  function baixar(blob: Blob, nome: string) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = nome;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+  }
+
+  async function compartilharPdf() {
+    setGerando(true);
+    setAvisoPdf("");
+    try {
+      const blob = await gerarPdfRelatorio({
+        entradas,
+        contratos,
+        parcelas,
+        itens,
+        iluminacaoItens,
+        iluminacaoCotacoes,
+        emitidoPor,
+        hoje,
+      });
+      const nome = nomeArquivoRelatorio(hoje);
+      const arquivo = new File([blob], nome, { type: "application/pdf" });
+
+      if (navigator.canShare?.({ files: [arquivo] })) {
+        try {
+          await navigator.share({
+            files: [arquivo],
+            title: "Prestação de contas — Apartamento GB",
+          });
+          return;
+        } catch (erro) {
+          // Cancelar a folha de compartilhamento não é erro: não vira download.
+          if ((erro as Error)?.name === "AbortError") return;
+          setAvisoPdf("Não deu para abrir o compartilhamento. O PDF foi baixado.");
+        }
+      }
+
+      baixar(blob, nome);
+    } catch {
+      setAvisoPdf("Não deu para gerar o PDF. Tente novamente.");
+    } finally {
+      setGerando(false);
+    }
+  }
+
   if (carregando) {
     return <p className="status-message">Montando o relatório...</p>;
   }
@@ -105,11 +170,18 @@ export default function RelatorioView() {
         <button
           type="button"
           className="obra-btn obra-btn--primario"
-          onClick={() => window.print()}
+          disabled={gerando}
+          onClick={compartilharPdf}
         >
-          Imprimir / Salvar PDF
+          {gerando
+            ? "Gerando PDF..."
+            : podeCompartilhar
+              ? "Compartilhar PDF"
+              : "Baixar PDF"}
         </button>
       </div>
+
+      {avisoPdf && <p className="rel-aviso-pdf">{avisoPdf}</p>}
 
       {erro && <p className="status-message status-message--error">{erro}</p>}
 
