@@ -107,17 +107,28 @@ como marcá-la como comprada pela interface. A tabela mostra isso explicitamente
 números, entradas lançadas, pagamentos realizados em ordem cronológica, o que está em aberto
 mês a mês e as compras escolhidas agrupadas por ambiente.
 
-A saída é o próprio diálogo de impressão do navegador (`window.print()` sobre um bloco
-`@media print` em `app/globals.css`) — no celular isso vira "Salvar em PDF" ou compartilhar
-direto. Sem biblioteca de PDF, sem renderização no servidor.
+O botão gera o PDF no próprio navegador (`lib/pdfRelatorio.ts`, com jsPDF e jspdf-autotable) e
+entrega o arquivo à folha de compartilhamento do sistema via `navigator.share`, onde estão o
+WhatsApp, o e-mail e a impressão. Onde a Web Share nível 2 não existir — desktop, em geral — o
+mesmo botão baixa o arquivo e muda de rótulo para "Baixar PDF".
 
-Duas decisões do CSS de impressão valem nota:
+A versão anterior usava `window.print()`, que no Safari em tela cheia simplesmente não abre
+nada, e mesmo funcionando exigia salvar o PDF e ir procurá-lo para compartilhar.
 
-- **Nada depende de fundo colorido.** Impressora P&B e `print-color-adjust` não confiável
-  fariam um chip "Pago" sumir dentro de um bloco escuro; no print tudo é texto e borda.
+Três decisões valem nota:
+
+- **As bibliotecas entram por `import()` dinâmico**, só quando alguém aperta o botão. A rota
+  continua leve para quem só quer ler na tela.
+- **`showFoot: "lastPage"` e `rowPageBreak: "avoid"` nas tabelas.** O padrão do autoTable
+  repete o rodapé em toda página: "Total pago" apareceria embaixo de uma lista incompleta e
+  pareceria erro de conta. E sem `rowPageBreak` a forma de pagamento ficava órfã na página
+  seguinte.
 - **A rota fica atrás do código de acesso.** Ao contrário de `/cotacao`, que é público de
   propósito para mandar a fornecedor, o relatório é dado financeiro da família e não entra em
   `PUBLIC_PATHS` no `middleware.ts`.
+
+O `@media print` continua em `app/globals.css` para quem imprimir a página pelo navegador no
+computador.
 
 O documento declara o que não sabe: os itens que ficam mas ainda não têm cotação aparecem em
 seção própria, fora de todos os totais. Prestação de contas que esconde buraco não presta
