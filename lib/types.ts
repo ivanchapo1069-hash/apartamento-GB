@@ -13,6 +13,8 @@ export interface ShoppingItem {
   quote_store: string | null;
   quote_product_url: string | null;
   quote_checked_at: string | null;
+  comprado_em: string | null;
+  valor_pago: number | null;
   updated_by: string | null;
   updated_at: string;
 }
@@ -34,7 +36,7 @@ export type FilterKey = "todos" | "pendentes" | "fica" | "sai" | "trocar";
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
-export type AppView = "decisoes" | "cotacoes" | "obra";
+export type AppView = "decisoes" | "cotacoes" | "obra" | "orcamento";
 
 export type QuotePatch = Pick<
   ShoppingItem,
@@ -98,3 +100,45 @@ export interface ParcelaStatus {
   /** Dias até o vencimento. Negativo = atrasado. Nulo quando não há vencimento. */
   dias: number | null;
 }
+
+// ---------- Orçamento: entradas, saldo e projeção ----------
+
+/**
+ * Aporte de dinheiro que banca a reforma. Como na parcela, o único estado
+ * gravado é o fato: `recebido_em` preenchido ou nulo. Previsto e atrasado
+ * são derivados em lib/orcamento.ts.
+ */
+export interface OrcamentoEntrada {
+  id: number;
+  descricao: string;
+  valor: number;
+  data_prevista: string | null;
+  recebido_em: string | null;
+  origem: string | null;
+  observacao: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type EntradaStatusKey = "recebido" | "atrasado" | "previsto";
+
+export interface EntradaStatus {
+  key: EntradaStatusKey;
+  label: string;
+}
+
+/** Só o que o cálculo do orçamento precisa saber de uma linha de iluminação. */
+export interface IluminacaoItem {
+  id: number;
+  comprado_em: string | null;
+  valor_pago: number | null;
+}
+
+export interface IluminacaoCotacao {
+  lighting_item_id: number;
+  line_total: number;
+  is_selected: boolean;
+}
+
+export type ComprasPatch = Pick<ShoppingItem, "comprado_em" | "valor_pago">;

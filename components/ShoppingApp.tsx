@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { sortSections } from "@/lib/sections";
 import type {
   AppView,
+  ComprasPatch,
   Decision,
   FilterKey,
   QuotePatch,
@@ -14,6 +15,7 @@ import type {
 } from "@/lib/types";
 import ItemCard from "./ItemCard";
 import ObraApp from "./ObraApp";
+import OrcamentoApp from "./OrcamentoApp";
 import QuoteCard from "./QuoteCard";
 
 const FILTERS: { key: FilterKey; label: string }[] = [
@@ -224,6 +226,14 @@ export default function ShoppingApp() {
     scheduleSave(id, patch);
   }
 
+  function handleComprasChange(id: number, comprasPatch: Partial<ComprasPatch>) {
+    if (!currentUser) return;
+    const now = new Date().toISOString();
+    const patch = { ...comprasPatch, updated_by: currentUser, updated_at: now };
+    setItems((prev) => prev.map((it) => (it.id === id ? { ...it, ...patch } : it)));
+    scheduleSave(id, patch);
+  }
+
   function handleRetry(id: number) {
     if (pendingPatches.current.has(id)) {
       persist(id);
@@ -319,6 +329,8 @@ export default function ShoppingApp() {
     );
   }
 
+  const ehListaDeItens = view === "decisoes" || view === "cotacoes";
+
   return (
     <main className="app-shell">
       <header className="app-header">
@@ -353,9 +365,17 @@ export default function ShoppingApp() {
         >
           Obra
         </button>
+        <button
+          type="button"
+          className={view === "orcamento" ? "is-active" : ""}
+          onClick={() => setView("orcamento")}
+        >
+          Orçamento
+        </button>
       </nav>
 
       {view === "obra" && <ObraApp currentUser={currentUser} />}
+      {view === "orcamento" && <OrcamentoApp currentUser={currentUser} />}
 
       {view === "decisoes" ? (
         <section className="counters-row" aria-label="Resumo das decisões">
@@ -393,7 +413,7 @@ export default function ShoppingApp() {
         </section>
       ) : null}
 
-      {view !== "obra" && (
+      {ehListaDeItens && (
       <section className="filters-row">
         {view === "cotacoes" && (
           <p className="quote-list-label">{quoteSummary.totalItems} itens que ficaram</p>
@@ -422,15 +442,15 @@ export default function ShoppingApp() {
       </section>
       )}
 
-      {view !== "obra" && loading && <p className="status-message">Carregando itens...</p>}
-      {view !== "obra" && loadError && (
+      {ehListaDeItens && loading && <p className="status-message">Carregando itens...</p>}
+      {ehListaDeItens && loadError && (
         <p className="status-message status-message--error">{loadError}</p>
       )}
-      {view !== "obra" && !loading && !loadError && filteredItems.length === 0 && (
+      {ehListaDeItens && !loading && !loadError && filteredItems.length === 0 && (
         <p className="status-message">Nenhum item encontrado.</p>
       )}
 
-      {view !== "obra" && (
+      {ehListaDeItens && (
       <div className="sections-list">
         {groupedSections.map(({ section, items: sectionItems }) => (
           <section key={section} className="section-block">
@@ -444,6 +464,7 @@ export default function ShoppingApp() {
                     saveStatus={saveStatus[item.id] ?? "idle"}
                     onQuoteChange={handleQuoteChange}
                     onSpecificationChange={handleSpecificationChange}
+                    onComprasChange={handleComprasChange}
                     onRetry={handleRetry}
                   />
                 ) : (
