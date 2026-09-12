@@ -1675,3 +1675,200 @@ textarea {
 }
 
 .compra-form .obra-editor-acoes { grid-column: 1 / -1; }
+
+/* ---------- relatório de prestação de contas ---------- */
+
+.rel {
+  max-width: 720px;
+  margin: 0 auto;
+  padding-inline: 18px;
+  padding-block: 20px 48px;
+  padding-top: calc(20px + var(--safe-top));
+  padding-bottom: calc(48px + var(--safe-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.rel-acoes {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.rel-acoes a { text-decoration: none; display: inline-flex; align-items: center; }
+
+.rel-cabecalho {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-bottom: 14px;
+  border-bottom: 2px solid var(--ink);
+}
+
+.rel-eyebrow {
+  margin: 0;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.rel-cabecalho h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+}
+
+.rel-meta { margin: 2px 0 0; font-size: 0.82rem; color: var(--ink-soft); }
+
+.rel-secao { display: flex; flex-direction: column; gap: 8px; }
+
+.rel-secao h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.rel-tabela {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.84rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.rel-tabela th {
+  text-align: left;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding: 0 0 6px;
+  border-bottom: 1px solid var(--ink-soft);
+}
+
+.rel-tabela th.num, .rel-tabela td.num { text-align: right; white-space: nowrap; }
+.rel-tabela th + th, .rel-tabela td + td { padding-left: 12px; }
+
+.rel-tabela td {
+  padding: 7px 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.rel-tabela tfoot td {
+  border-top: 2px solid var(--ink-soft);
+  border-bottom: none;
+  font-weight: 750;
+  padding-top: 8px;
+}
+
+.rel-tabela--resumo td { padding: 8px 0; }
+.rel-tabela--resumo td:last-child { text-align: right; white-space: nowrap; }
+.rel-destaque td { font-weight: 750; }
+.rel-destaque td:first-child { color: var(--ink); }
+
+.rel-nota {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  font-weight: 400;
+}
+
+.rel-marca {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 0.72rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.rel-marca--recebido { border-color: var(--green-soft-border); color: var(--green); }
+.rel-marca--atrasado { border-color: var(--red-soft-border); color: var(--red); }
+.rel-marca--previsto { border-color: var(--border); color: var(--ink-soft); }
+
+.rel-buraco {
+  margin: 0;
+  padding: 11px 14px;
+  border: 1px solid var(--ink-soft);
+  border-radius: var(--radius-md);
+  font-size: 0.83rem;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.rel-buraco b { color: var(--ink); }
+
+.rel-vazio { margin: 0; font-size: 0.83rem; color: var(--ink-soft); }
+
+.rel-rodape {
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.rel-rodape p { margin: 0; font-size: 0.74rem; color: var(--ink-soft); line-height: 1.5; }
+
+.relatorio-link { padding: 0 16px 18px; }
+
+/* ---------- impressão ---------- */
+
+@media print {
+  /* A cor de fundo não é confiável na impressão (P&B, print-color-adjust
+     ignorado): tudo aqui se apoia em texto e borda, nunca em fundo colorido. */
+  :root {
+    --paper: #fff;
+    --card: #fff;
+    --ink: #000;
+    --ink-soft: #444;
+    --border: #bbb;
+    --green: #000;
+    --red: #000;
+    --green-soft-border: #666;
+    --red-soft-border: #666;
+    --amber-soft-border: #666;
+  }
+
+  body { background: #fff; color: #000; }
+
+  .rel-acoes,
+  .app-header,
+  .view-switch,
+  .obra-btn,
+  .status-message {
+    display: none !important;
+  }
+
+  .rel {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+    gap: 16px;
+    font-size: 10.5pt;
+  }
+
+  .rel-secao { break-inside: auto; }
+  .rel-secao h2 { font-size: 11.5pt; margin-top: 4pt; }
+  .rel-cabecalho h1 { font-size: 18pt; }
+  .rel-tabela { font-size: 9.5pt; }
+  .rel-tabela thead { display: table-header-group; }
+  .rel-tabela tr { break-inside: avoid; page-break-inside: avoid; }
+  .rel-buraco { border-color: #000; }
+
+  a[href]::after { content: ""; }
+
+  @page {
+    margin: 14mm;
+  }
+}

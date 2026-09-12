@@ -281,6 +281,12 @@ export default function OrcamentoApp({ currentUser }: Props) {
         />
       )}
 
+      <div className="relatorio-link">
+        <a className="obra-btn obra-btn--mini" href="/relatorio">
+          Gerar relatório de prestação de contas
+        </a>
+      </div>
+
       {!formAberto && (
         <div className="obra-novo-linha">
           <button
