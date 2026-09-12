@@ -1198,7 +1198,62 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 9px;
+  width: 100%;
   padding: 14px 15px 12px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.obra-contrato-topo:hover { background: var(--paper); }
+
+.obra-contrato-nome {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.obra-seta {
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
+  border-right: 2px solid var(--ink-soft);
+  border-bottom: 2px solid var(--ink-soft);
+  transform: rotate(45deg) translate(-2px, -2px);
+  transition: transform 0.18s ease;
+}
+
+.obra-seta.is-aberta { transform: rotate(-135deg) translate(-2px, -2px); }
+
+.obra-contrato-resumo {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.obra-contrato-resumo.tem-atraso { color: var(--red); }
+
+.obra-p-mais {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border);
+}
+
+.obra-btn--mais {
+  padding: 5px 10px;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  color: var(--ink-soft);
 }
 
 .obra-contrato-id { display: flex; flex-direction: column; gap: 3px; }
@@ -1216,6 +1271,10 @@ textarea {
   font-size: 1rem;
   font-weight: 750;
   letter-spacing: -0.01em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .obra-seta { transition: none; }
 }
 
 .obra-contrato-escopo { margin: 0; font-size: 0.83rem; color: var(--ink-soft); }
@@ -1264,6 +1323,7 @@ textarea {
 }
 
 .obra-alerta {
+  display: block;
   margin: 0;
   font-size: 0.76rem;
   color: var(--amber);

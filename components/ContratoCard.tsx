@@ -1,17 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import {
   CHIP_POR_STATUS,
   FORMAS_PAGAMENTO,
   formatBRL,
   formatDataCurta,
+  plural,
   resumoContrato,
   statusParcela,
 } from "@/lib/obra";
 import type { ObraContrato, ObraParcela, UserName } from "@/lib/types";
 import ParcelaEditor from "./ParcelaEditor";
+
+const ABERTOS_KEY = "gb-obra-contratos-abertos";
 
 interface Props {
   contrato: ObraContrato;
@@ -43,9 +46,54 @@ export default function ContratoCard({
   const [confirmandoExclusao, setConfirmandoExclusao] = useState<number | "contrato" | null>(null);
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState("");
+  const [maisAbertoId, setMaisAbertoId] = useState<number | null>(null);
+  const [abertoManual, setAbertoManual] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    try {
+      const salvo = JSON.parse(window.localStorage.getItem(ABERTOS_KEY) ?? "{}");
+      const valor = salvo?.[contrato.id];
+      if (typeof valor === "boolean") setAbertoManual(valor);
+    } catch {
+      // localStorage indisponível — o card abre pelas regras padrão
+    }
+  }, [contrato.id]);
 
   const resumo = resumoContrato(contrato, parcelas, hoje);
   const proximoNumero = parcelas.reduce((maior, p) => Math.max(maior, p.numero), 0) + 1;
+
+  // Se a lista chegou filtrada, esconder as parcelas anularia o filtro.
+  const filtroAtivo = visiveis.length !== parcelas.length;
+  const aberto = abertoManual ?? (filtroAtivo || resumo.temAtraso);
+
+  const proxima = parcelas
+    .filter((p) => !p.pago_em)
+    .map((p) => statusParcela(p, hoje))
+    .filter((s) => s.vencimento)
+    .sort((a, b) => (a.vencimento as string).localeCompare(b.vencimento as string))[0];
+
+  const emAberto = resumo.qtdTotal - resumo.qtdPagas;
+  const linhaResumo = resumo.temAtraso
+    ? `${resumo.qtdPagas} de ${resumo.qtdTotal} pagas · ${formatBRL(resumo.vencido)} vencido`
+    : emAberto === 0 && resumo.qtdTotal > 0
+      ? `${plural(resumo.qtdTotal, "parcela", "parcelas")} · tudo pago`
+      : proxima
+        ? `${resumo.qtdPagas} de ${resumo.qtdTotal} pagas · próxima ${formatDataCurta(proxima.vencimento)}`
+        : `${resumo.qtdPagas} de ${resumo.qtdTotal} pagas · aguardando entrega`;
+
+  function alternarAberto() {
+    const novo = !aberto;
+    setAbertoManual(novo);
+    try {
+      const salvo = JSON.parse(window.localStorage.getItem(ABERTOS_KEY) ?? "{}");
+      window.localStorage.setItem(
+        ABERTOS_KEY,
+        JSON.stringify({ ...salvo, [contrato.id]: novo }),
+      );
+    } catch {
+      // sem localStorage o estado vale só nesta sessão
+    }
+  }
 
   function abrirPagamento(parcela: ObraParcela) {
     setPagandoId(parcela.id);
@@ -140,17 +188,26 @@ export default function ContratoCard({
         contrato.status === "cancelado" ? " is-cancelado" : ""
       }`}
     >
-      <div className="obra-contrato-topo">
+      <button
+        type="button"
+        className="obra-contrato-topo"
+        aria-expanded={aberto}
+        aria-controls={`contrato-${contrato.id}-corpo`}
+        onClick={alternarAberto}
+      >
         <div className="obra-contrato-id">
           <span className="obra-contrato-cat">
             {contrato.categoria}
             {contrato.status !== "ativo" && ` · ${contrato.status === "concluido" ? "Concluído" : "Cancelado"}`}
           </span>
-          <h3 className="obra-contrato-nome">{contrato.fornecedor}</h3>
+          <h3 className="obra-contrato-nome">
+            {contrato.fornecedor}
+            <span className={`obra-seta${aberto ? " is-aberta" : ""}`} aria-hidden="true" />
+          </h3>
           {contrato.escopo && <p className="obra-contrato-escopo">{contrato.escopo}</p>}
         </div>
 
-        {contrato.condicoes && (
+        {aberto && contrato.condicoes && (
           <p className="obra-contrato-cond">
             <b>Condições:</b> {contrato.condicoes}
           </p>
@@ -162,9 +219,7 @@ export default function ContratoCard({
               Pago <span className="val">{formatBRL(resumo.pago)}</span> de{" "}
               <span className="val">{formatBRL(contrato.valor_total)}</span>
             </span>
-            <span>
-              {resumo.qtdPagas}/{resumo.qtdTotal} parcelas · {resumo.percentual}%
-            </span>
+            <span>{resumo.percentual}%</span>
           </div>
           <div
             className="obra-barra"
@@ -175,14 +230,21 @@ export default function ContratoCard({
           </div>
         </div>
 
-        {resumo.qtdTotal > 0 && Math.abs(resumo.diferenca) >= 0.01 && (
-          <p className="obra-alerta">
+        <p className={`obra-contrato-resumo${resumo.temAtraso ? " tem-atraso" : ""}`}>
+          {linhaResumo}
+        </p>
+
+        {aberto && resumo.qtdTotal > 0 && Math.abs(resumo.diferenca) >= 0.01 && (
+          <span className="obra-alerta">
             As parcelas somam {formatBRL(resumo.somaParcelas)} —{" "}
             {resumo.diferenca > 0 ? "faltam" : "passam"} {formatBRL(Math.abs(resumo.diferenca))} para
             fechar com o valor do contrato.
-          </p>
+          </span>
         )}
-      </div>
+      </button>
+
+      {aberto && (
+      <div id={`contrato-${contrato.id}-corpo`}>
 
       <ul className="obra-parcelas">
         {visiveis.map((parcela) => {
@@ -251,72 +313,98 @@ export default function ContratoCard({
                     )}
 
                     <div className="obra-p-acoes">
-                      {parcela.pago_em ? (
-                        <button
-                          type="button"
-                          className="obra-btn obra-btn--mini"
-                          disabled={ocupado}
-                          onClick={() => desfazerPagamento(parcela)}
-                        >
-                          Desfazer
-                        </button>
-                      ) : status.key === "aguardando" ? (
-                        <button
-                          type="button"
-                          className="obra-btn obra-btn--mini obra-btn--primario"
-                          disabled={ocupado}
-                          onClick={() => marcarEntrega(parcela, hoje)}
-                        >
-                          Marco entregue
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          className="obra-btn obra-btn--mini obra-btn--primario"
-                          onClick={() => abrirPagamento(parcela)}
-                        >
-                          Marcar pago
-                        </button>
-                      )}
-
-                      {parcela.gatilho === "marco" && parcela.marco_entregue_em && !parcela.pago_em && (
-                        <button
-                          type="button"
-                          className="obra-btn obra-btn--mini"
-                          disabled={ocupado}
-                          onClick={() => marcarEntrega(parcela, null)}
-                        >
-                          Desfazer entrega
-                        </button>
-                      )}
+                      {/* Só a ação daquela linha fica à vista. Editar e excluir
+                          são raras e viviam ocupando mais altura que os dados. */}
+                      {!parcela.pago_em &&
+                        (status.key === "aguardando" ? (
+                          <button
+                            type="button"
+                            className="obra-btn obra-btn--mini obra-btn--primario"
+                            disabled={ocupado}
+                            onClick={() => marcarEntrega(parcela, hoje)}
+                          >
+                            Marco entregue
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="obra-btn obra-btn--mini obra-btn--primario"
+                            onClick={() => abrirPagamento(parcela)}
+                          >
+                            Marcar pago
+                          </button>
+                        ))}
 
                       <button
                         type="button"
-                        className="obra-btn obra-btn--mini"
-                        onClick={() => setEditandoParcelaId(parcela.id)}
+                        className="obra-btn obra-btn--mini obra-btn--mais"
+                        aria-expanded={maisAbertoId === parcela.id}
+                        aria-label={`Mais ações da parcela ${parcela.numero}`}
+                        onClick={() =>
+                          setMaisAbertoId((atual) => (atual === parcela.id ? null : parcela.id))
+                        }
                       >
-                        Editar
+                        •••
                       </button>
+                    </div>
 
-                      {confirmandoExclusao === parcela.id ? (
-                        <button
-                          type="button"
-                          className="obra-btn obra-btn--mini obra-btn--perigo"
-                          disabled={ocupado}
-                          onClick={() => excluirParcela(parcela.id)}
-                        >
-                          Confirmar exclusão
-                        </button>
-                      ) : (
+                    {maisAbertoId === parcela.id && (
+                      <div className="obra-p-mais">
+                        {parcela.pago_em && (
+                          <button
+                            type="button"
+                            className="obra-btn obra-btn--mini"
+                            disabled={ocupado}
+                            onClick={() => desfazerPagamento(parcela)}
+                          >
+                            Desfazer pagamento
+                          </button>
+                        )}
+
+                        {parcela.gatilho === "marco" &&
+                          parcela.marco_entregue_em &&
+                          !parcela.pago_em && (
+                            <button
+                              type="button"
+                              className="obra-btn obra-btn--mini"
+                              disabled={ocupado}
+                              onClick={() => marcarEntrega(parcela, null)}
+                            >
+                              Desfazer entrega
+                            </button>
+                          )}
+
                         <button
                           type="button"
                           className="obra-btn obra-btn--mini"
-                          onClick={() => setConfirmandoExclusao(parcela.id)}
+                          onClick={() => {
+                            setEditandoParcelaId(parcela.id);
+                            setMaisAbertoId(null);
+                          }}
                         >
-                          Excluir
+                          Editar
                         </button>
-                      )}
-                    </div>
+
+                        {confirmandoExclusao === parcela.id ? (
+                          <button
+                            type="button"
+                            className="obra-btn obra-btn--mini obra-btn--perigo"
+                            disabled={ocupado}
+                            onClick={() => excluirParcela(parcela.id)}
+                          >
+                            Confirmar exclusão
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="obra-btn obra-btn--mini"
+                            onClick={() => setConfirmandoExclusao(parcela.id)}
+                          >
+                            Excluir
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {pagandoId === parcela.id && (
@@ -437,6 +525,8 @@ export default function ContratoCard({
           </button>
         )}
       </div>
+      </div>
+      )}
     </article>
   );
 }
