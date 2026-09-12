@@ -9,6 +9,8 @@ via Supabase Realtime.
 - **Obra** — contratos de serviço (arquiteta, marcenaria, empreiteiro) e suas parcelas.
 - **Orçamento** — de onde vem o dinheiro, quanto já saiu e se sobra ou estoura no fim.
 
+Em `/relatorio` o app monta uma prestação de contas fechada, para imprimir ou salvar em PDF.
+
 ## Stack
 
 - Next.js 15 (App Router) + TypeScript
@@ -90,6 +92,28 @@ mas fica de fora do saldo real — saldo só considera dinheiro que já existe n
 
 Iluminação entra nas contas como comprometido, mas ainda não tem tela no app, então não há
 como marcá-la como comprada pela interface. A tabela mostra isso explicitamente.
+
+## Relatório de prestação de contas
+
+`/relatorio` monta um documento para entregar a quem está bancando a reforma: resumo dos
+números, entradas lançadas, pagamentos realizados em ordem cronológica, o que está em aberto
+mês a mês e as compras escolhidas agrupadas por ambiente.
+
+A saída é o próprio diálogo de impressão do navegador (`window.print()` sobre um bloco
+`@media print` em `app/globals.css`) — no celular isso vira "Salvar em PDF" ou compartilhar
+direto. Sem biblioteca de PDF, sem renderização no servidor.
+
+Duas decisões do CSS de impressão valem nota:
+
+- **Nada depende de fundo colorido.** Impressora P&B e `print-color-adjust` não confiável
+  fariam um chip "Pago" sumir dentro de um bloco escuro; no print tudo é texto e borda.
+- **A rota fica atrás do código de acesso.** Ao contrário de `/cotacao`, que é público de
+  propósito para mandar a fornecedor, o relatório é dado financeiro da família e não entra em
+  `PUBLIC_PATHS` no `middleware.ts`.
+
+O documento declara o que não sabe: os itens que ficam mas ainda não têm cotação aparecem em
+seção própria, fora de todos os totais. Prestação de contas que esconde buraco não presta
+contas.
 
 ## Segurança
 
