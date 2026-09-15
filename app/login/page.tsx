@@ -5,27 +5,27 @@ import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!code) return;
+    if (!password) return;
     setLoading(true);
     setError("");
     try {
       const res = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code }),
+        body: JSON.stringify({ password }),
       });
       const data = await res.json();
       if (data.ok) {
         router.replace("/");
         router.refresh();
       } else {
-        setError(data.error || "Código incorreto.");
+        setError(data.error || "Senha incorreta.");
       }
     } catch {
       setError("Erro ao conectar. Tente novamente.");
@@ -41,19 +41,19 @@ export default function LoginPage() {
         <h1>Compras</h1>
         <p className="login-subtitle">Apartamento GB</p>
         <form onSubmit={handleSubmit}>
-          <label htmlFor="code">Código da família</label>
+          <label htmlFor="password">Sua senha</label>
           <input
-            id="code"
-            name="code"
+            id="password"
+            name="password"
             type="password"
             autoFocus
-            autoComplete="off"
-            value={code}
-            onChange={(event) => setCode(event.target.value)}
-            placeholder="Digite o código"
+            autoComplete="current-password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder="Digite sua senha"
           />
           {error && <p className="login-error">{error}</p>}
-          <button type="submit" disabled={loading || !code}>
+          <button type="submit" disabled={loading || !password}>
             {loading ? "Entrando..." : "Entrar"}
           </button>
         </form>

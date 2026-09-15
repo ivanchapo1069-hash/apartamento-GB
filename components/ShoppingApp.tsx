@@ -14,6 +14,7 @@ import type {
   UserName,
 } from "@/lib/types";
 import ItemCard from "./ItemCard";
+import ItemEditor from "./ItemEditor";
 import ObraApp from "./ObraApp";
 import OrcamentoApp from "./OrcamentoApp";
 import QuoteCard from "./QuoteCard";
@@ -26,7 +27,10 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "trocar", label: "Trocar" },
 ];
 
-const USER_STORAGE_KEY = "gb-current-user";
+function readCookie(name: string): string | null {
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
 
 export default function ShoppingApp() {
   const [userLoaded, setUserLoaded] = useState(false);
@@ -38,39 +42,25 @@ export default function ShoppingApp() {
   const [search, setSearch] = useState("");
   const [saveStatus, setSaveStatus] = useState<Record<number, SaveStatus>>({});
   const [view, setView] = useState<AppView>("decisoes");
+  const [novoItemAberto, setNovoItemAberto] = useState(false);
 
   const editingNoteIds = useRef<Set<number>>(new Set());
   const timers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
   const pendingPatches = useRef<Map<number, Partial<ShoppingItem>>>(new Map());
 
   useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(USER_STORAGE_KEY);
-      if (saved === "Ivan" || saved === "Giovana") {
-        setCurrentUser(saved);
-      }
-    } catch {
-      // localStorage indisponível — segue sem usuário memorizado
+    // Quem está usando vem da senha digitada em /login (cookie gb_user),
+    // não é mais uma escolha livre — assim ninguém posta como a outra pessoa.
+    const user = readCookie("gb_user");
+    if (user === "Ivan" || user === "Giovana") {
+      setCurrentUser(user);
     }
     setUserLoaded(true);
   }, []);
 
-  function chooseUser(user: UserName) {
-    setCurrentUser(user);
-    try {
-      window.localStorage.setItem(USER_STORAGE_KEY, user);
-    } catch {
-      // ignora falha de armazenamento
-    }
-  }
-
-  function switchUser() {
-    setCurrentUser(null);
-    try {
-      window.localStorage.removeItem(USER_STORAGE_KEY);
-    } catch {
-      // ignora falha de armazenamento
-    }
+  async function signOut() {
+    await fetch("/api/logout", { method: "POST" });
+    window.location.href = "/login";
   }
 
   useEffect(() => {
@@ -315,13 +305,12 @@ export default function ShoppingApp() {
           <div className="user-picker-emoji">🏠</div>
           <h1>Compras</h1>
           <p className="user-picker-subtitle">Apartamento GB</p>
-          <p className="user-picker-question">Quem está usando?</p>
+          <p className="user-picker-question">
+            Não conseguimos identificar seu usuário. Entre de novo com sua senha.
+          </p>
           <div className="user-picker-buttons">
-            <button type="button" onClick={() => chooseUser("Ivan")}>
-              Ivan
-            </button>
-            <button type="button" onClick={() => chooseUser("Giovana")}>
-              Giovana
+            <button type="button" onClick={signOut}>
+              Ir para o login
             </button>
           </div>
         </div>
@@ -338,8 +327,8 @@ export default function ShoppingApp() {
           <p className="app-eyebrow">COMPRAS</p>
           <h1>Apartamento GB</h1>
         </div>
-        <button type="button" className="switch-user-btn" onClick={switchUser}>
-          {currentUser} · trocar
+        <button type="button" className="switch-user-btn" onClick={signOut}>
+          {currentUser} · sair
         </button>
       </header>
 
@@ -412,6 +401,26 @@ export default function ShoppingApp() {
           </div>
         </section>
       ) : null}
+
+      {view === "decisoes" && !novoItemAberto && (
+        <div className="obra-novo-linha">
+          <button
+            type="button"
+            className="obra-btn obra-btn--primario"
+            onClick={() => setNovoItemAberto(true)}
+          >
+            + Novo item
+          </button>
+        </div>
+      )}
+
+      {view === "decisoes" && novoItemAberto && (
+        <ItemEditor
+          currentUser={currentUser}
+          onDone={() => setNovoItemAberto(false)}
+          onCancel={() => setNovoItemAberto(false)}
+        />
+      )}
 
       {ehListaDeItens && (
       <section className="filters-row">

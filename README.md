@@ -4,7 +4,8 @@ App simples e compartilhado para Ivan e Giovana tocarem o apartamento: decidir o
 cotar o que ficou e acompanhar os contratos e pagamentos da obra. Sincroniza em tempo real
 via Supabase Realtime.
 
-- **Decisões** — item a item, o que fica, sai ou troca.
+- **Decisões** — item a item, o que fica, sai ou troca; dá para adicionar um item que não
+  estava no projeto original (papel de parede, por exemplo) pelo botão "+ Novo item".
 - **Cotações** — os itens marcados como `FICA`, com foto, preço, loja e link do produto.
 - **Obra** — contratos de serviço (arquiteta, marcenaria, empreiteiro) e suas parcelas.
 - **Orçamento** — de onde vem o dinheiro, quanto já saiu e se sobra ou estoura no fim.
@@ -16,7 +17,7 @@ Em `/relatorio` o app monta uma prestação de contas fechada, para imprimir ou 
 - Next.js 15 (App Router) + TypeScript
 - Supabase (Postgres + Realtime), tabelas `public.shopping_items`, `public.obra_contratos`,
   `public.obra_parcelas` e `public.orcamento_entradas`
-- Sem autenticação tradicional — um código de acesso simples protege a interface (ver abaixo)
+- Sem autenticação tradicional — cada morador entra com a própria senha (ver abaixo)
 
 ## Variáveis de ambiente
 
@@ -24,7 +25,8 @@ Em `/relatorio` o app monta uma prestação de contas fechada, para imprimir ou 
 | --- | --- |
 | `NEXT_PUBLIC_SUPABASE_URL` | URL do projeto Supabase |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Chave anon/publishable (segura para o navegador) |
-| `APP_ACCESS_CODE` | Código que Ivan e Giovana digitam para entrar no app |
+| `IVAN_PASSWORD` | Senha do Ivan para entrar no app |
+| `GIOVANA_PASSWORD` | Senha da Giovana para entrar no app |
 | `SESSION_SECRET` | Segredo aleatório usado para assinar o cookie de sessão |
 | `GEMINI_API_KEY` | Chave da Gemini API, usada só no servidor para a busca automática de preço |
 | `GEMINI_QUOTE_MODEL` | Opcional — modelo Gemini para a busca (padrão `gemini-3.6-flash`) |
@@ -142,9 +144,12 @@ orçamento seguem o mesmo padrão das `shopping_items`, incluindo DELETE, porque
 excluir contratos, parcelas e entradas. Como isso
 por si só deixaria a tabela editável por qualquer pessoa que descobrisse a URL do Supabase e a
 chave anon (visível no bundle do navegador), o app adiciona uma trava simples e apropriada
-para uso familiar: toda a interface fica atrás de um código de acesso (`APP_ACCESS_CODE`),
-verificado em `/api/login`, que libera um cookie `httpOnly` checado pelo `middleware.ts` em
-toda rota. `robots.txt` também bloqueia indexação.
+para uso familiar: Ivan e Giovana entram com senhas próprias (`IVAN_PASSWORD` /
+`GIOVANA_PASSWORD`), verificadas em `/api/login`. O acesso é liberado por um cookie
+`httpOnly` (`gb_session`) checado pelo `middleware.ts` em toda rota; a senha usada também
+define, num segundo cookie legível (`gb_user`), quem está logado — isso substitui a tela
+antiga em que a pessoa só clicava no próprio nome, sem nenhuma prova de que era ela mesma.
+`robots.txt` também bloqueia indexação.
 
 Isso não é proteção de nível bancário — para dados sensíveis, o próximo passo seria Supabase
 Auth com policies por usuário. Para uma lista de decisões de compra de eletrodomésticos, entre
