@@ -626,6 +626,29 @@ textarea {
   min-height: 18px;
 }
 
+.item-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--border);
+}
+
+.item-acoes-aviso {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--red);
+  text-align: right;
+}
+
+/* No lugar do card, o formulário de edição já está dentro do recuo da lista. */
+.section-items .item-form { margin: 0; }
+
 .item-updated {
   font-size: 0.72rem;
   color: var(--ink-soft);

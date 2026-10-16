@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { sortSections } from "@/lib/sections";
+import { SECTION_ORDER, sortSections } from "@/lib/sections";
 import type {
   AppView,
   ComprasPatch,
@@ -14,6 +14,7 @@ import type {
   UserName,
 } from "@/lib/types";
 import ItemCard from "./ItemCard";
+import ItemForm from "./ItemForm";
 import ObraApp from "./ObraApp";
 import OrcamentoApp from "./OrcamentoApp";
 import QuoteCard from "./QuoteCard";
@@ -38,6 +39,9 @@ export default function ShoppingApp() {
   const [search, setSearch] = useState("");
   const [saveStatus, setSaveStatus] = useState<Record<number, SaveStatus>>({});
   const [view, setView] = useState<AppView>("decisoes");
+  const [novoItemAberto, setNovoItemAberto] = useState(false);
+  const [editandoId, setEditandoId] = useState<number | null>(null);
+  const [erroItem, setErroItem] = useState("");
 
   const editingNoteIds = useRef<Set<number>>(new Set());
   const timers = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
@@ -234,6 +238,34 @@ export default function ShoppingApp() {
     scheduleSave(id, patch);
   }
 
+  function itemSalvo(salvo: ShoppingItem) {
+    setItems((prev) => {
+      const existe = prev.some((it) => it.id === salvo.id);
+      return existe
+        ? prev.map((it) => (it.id === salvo.id ? salvo : it))
+        : [...prev, salvo].sort((a, b) => a.id - b.id);
+    });
+    setNovoItemAberto(false);
+    setEditandoId(null);
+  }
+
+  async function handleDelete(id: number): Promise<boolean> {
+    setErroItem("");
+    // Um patch de decisão/observação ainda na fila recriaria o item morto.
+    const timer = timers.current.get(id);
+    if (timer) clearTimeout(timer);
+    timers.current.delete(id);
+    pendingPatches.current.delete(id);
+
+    const { error } = await supabase.from("shopping_items").delete().eq("id", id);
+    if (error) {
+      setErroItem("Não deu para excluir o item. Tente novamente.");
+      return false;
+    }
+    setItems((prev) => prev.filter((it) => it.id !== id));
+    return true;
+  }
+
   function handleRetry(id: number) {
     if (pendingPatches.current.has(id)) {
       persist(id);
@@ -290,6 +322,11 @@ export default function ShoppingApp() {
       return haystack.includes(term);
     });
   }, [items, filter, search, view]);
+
+  const secoesExistentes = useMemo(
+    () => sortSections([...new Set([...SECTION_ORDER, ...items.map((it) => it.section)])]),
+    [items],
+  );
 
   const groupedSections = useMemo(() => {
     const bySection = new Map<string, ShoppingItem[]>();
@@ -442,6 +479,35 @@ export default function ShoppingApp() {
       </section>
       )}
 
+      {view === "decisoes" && novoItemAberto && (
+        <ItemForm
+          item={null}
+          secoes={secoesExistentes}
+          currentUser={currentUser}
+          onDone={itemSalvo}
+          onCancel={() => setNovoItemAberto(false)}
+        />
+      )}
+
+      {view === "decisoes" && !novoItemAberto && (
+        <div className="obra-novo-linha">
+          <button
+            type="button"
+            className="obra-btn obra-btn--primario"
+            onClick={() => {
+              setEditandoId(null);
+              setNovoItemAberto(true);
+            }}
+          >
+            + Novo item
+          </button>
+        </div>
+      )}
+
+      {view === "decisoes" && erroItem && (
+        <p className="status-message status-message--error">{erroItem}</p>
+      )}
+
       {ehListaDeItens && loading && <p className="status-message">Carregando itens...</p>}
       {ehListaDeItens && loadError && (
         <p className="status-message status-message--error">{loadError}</p>
@@ -467,6 +533,15 @@ export default function ShoppingApp() {
                     onComprasChange={handleComprasChange}
                     onRetry={handleRetry}
                   />
+                ) : editandoId === item.id ? (
+                  <ItemForm
+                    key={item.id}
+                    item={item}
+                    secoes={secoesExistentes}
+                    currentUser={currentUser}
+                    onDone={itemSalvo}
+                    onCancel={() => setEditandoId(null)}
+                  />
                 ) : (
                   <ItemCard
                     key={item.id}
@@ -476,6 +551,11 @@ export default function ShoppingApp() {
                     onNoteChange={handleNoteChange}
                     onNoteBlur={handleNoteBlur}
                     onRetry={handleRetry}
+                    onEdit={(alvo) => {
+                      setNovoItemAberto(false);
+                      setEditandoId(alvo.id);
+                    }}
+                    onDelete={handleDelete}
                   />
                 )
               ))}

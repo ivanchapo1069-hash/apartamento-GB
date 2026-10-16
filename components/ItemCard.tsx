@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { Decision, SaveStatus, ShoppingItem } from "@/lib/types";
 import { formatRelativeTime } from "@/lib/time";
 
@@ -10,6 +11,8 @@ interface ItemCardProps {
   onNoteChange: (id: number, note: string) => void;
   onNoteBlur: (id: number) => void;
   onRetry: (id: number) => void;
+  onEdit: (item: ShoppingItem) => void;
+  onDelete: (id: number) => Promise<boolean>;
 }
 
 export default function ItemCard({
@@ -19,8 +22,29 @@ export default function ItemCard({
   onNoteChange,
   onNoteBlur,
   onRetry,
+  onEdit,
+  onDelete,
 }: ItemCardProps) {
+  const [confirmando, setConfirmando] = useState(false);
+  const [excluindo, setExcluindo] = useState(false);
   const decisionClass = item.decision ? item.decision.toLowerCase() : "pendente";
+
+  async function excluir() {
+    setExcluindo(true);
+    const ok = await onDelete(item.id);
+    // Se deu certo o card some; só volta ao normal quando falhou.
+    if (!ok) {
+      setExcluindo(false);
+      setConfirmando(false);
+    }
+  }
+
+  // Item já pago entra no realizado do orçamento: apagar muda o saldo.
+  const avisoExclusao = item.comprado_em
+    ? "Este item já foi comprado — excluir tira o valor pago do orçamento."
+    : item.quote_price !== null && item.quote_price !== undefined
+      ? "A cotação deste item também será apagada."
+      : "";
 
   function toggle(decision: Exclude<Decision, null>) {
     onDecision(item.id, item.decision === decision ? null : decision);
@@ -89,6 +113,43 @@ export default function ItemCard({
             </button>
           )}
         </span>
+      </div>
+
+      <div className="item-acoes">
+        {confirmando ? (
+          <>
+            {avisoExclusao && <p className="item-acoes-aviso">{avisoExclusao}</p>}
+            <button
+              type="button"
+              className="obra-btn obra-btn--mini"
+              disabled={excluindo}
+              onClick={() => setConfirmando(false)}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="obra-btn obra-btn--mini obra-btn--perigo"
+              disabled={excluindo}
+              onClick={excluir}
+            >
+              {excluindo ? "Excluindo..." : "Confirmar exclusão"}
+            </button>
+          </>
+        ) : (
+          <>
+            <button type="button" className="obra-btn obra-btn--mini" onClick={() => onEdit(item)}>
+              Editar
+            </button>
+            <button
+              type="button"
+              className="obra-btn obra-btn--mini"
+              onClick={() => setConfirmando(true)}
+            >
+              Excluir
+            </button>
+          </>
+        )}
       </div>
     </article>
   );
