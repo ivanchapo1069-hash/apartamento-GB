@@ -128,17 +128,4 @@ export interface EntradaStatus {
   label: string;
 }
 
-/** Só o que o cálculo do orçamento precisa saber de uma linha de iluminação. */
-export interface IluminacaoItem {
-  id: number;
-  comprado_em: string | null;
-  valor_pago: number | null;
-}
-
-export interface IluminacaoCotacao {
-  lighting_item_id: number;
-  line_total: number;
-  is_selected: boolean;
-}
-
 export type ComprasPatch = Pick<ShoppingItem, "comprado_em" | "valor_pago">;

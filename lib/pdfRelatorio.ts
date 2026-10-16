@@ -7,8 +7,6 @@ import {
   pagamentosRealizados,
 } from "./relatorio";
 import type {
-  IluminacaoCotacao,
-  IluminacaoItem,
   ObraContrato,
   ObraParcela,
   OrcamentoEntrada,
@@ -20,8 +18,6 @@ export interface DadosRelatorio {
   contratos: ObraContrato[];
   parcelas: ObraParcela[];
   itens: ShoppingItem[];
-  iluminacaoItens: IluminacaoItem[];
-  iluminacaoCotacoes: IluminacaoCotacao[];
   emitidoPor: string;
   hoje: string;
 }
@@ -46,25 +42,9 @@ export async function gerarPdfRelatorio(dados: DadosRelatorio): Promise<Blob> {
     import("jspdf-autotable"),
   ]);
 
-  const {
-    entradas,
-    contratos,
-    parcelas,
-    itens,
-    iluminacaoItens,
-    iluminacaoCotacoes,
-    emitidoPor,
-    hoje,
-  } = dados;
+  const { entradas, contratos, parcelas, itens, emitidoPor, hoje } = dados;
 
-  const resumo = resumoOrcamento(
-    entradas,
-    contratos,
-    parcelas,
-    itens,
-    iluminacaoItens,
-    iluminacaoCotacoes,
-  );
+  const resumo = resumoOrcamento(entradas, contratos, parcelas, itens);
   const pagamentos = pagamentosRealizados(contratos, parcelas, itens);
   const aberto = abertoPorMes(contratos, parcelas, hoje);
   const secoes = comprometidoPorSecao(itens);
@@ -288,11 +268,6 @@ export async function gerarPdfRelatorio(dados: DadosRelatorio): Promise<Blob> {
     String(secao.qtd),
     formatBRL(secao.valor),
   ]);
-  linhasCompras.push([
-    "Luminárias do projeto de iluminação\nlista própria, sem controle de compra no app",
-    String(iluminacaoItens.length),
-    formatBRL(resumo.comprometidoIluminacao),
-  ]);
   autoTable(doc, {
     startY: y,
     margin: { left: margem, right: margem },
@@ -307,13 +282,7 @@ export async function gerarPdfRelatorio(dados: DadosRelatorio): Promise<Blob> {
     columnStyles: { 1: { halign: "right", cellWidth: 20 }, 2: { halign: "right", cellWidth: 32 } },
     head: [["Ambiente", "Itens", "Cotado"]],
     body: linhasCompras,
-    foot: [
-      [
-        "Total escolhido e não pago",
-        "",
-        formatBRL(resumo.comprometidoCompras + resumo.comprometidoIluminacao),
-      ],
-    ],
+    foot: [["Total escolhido e não pago", "", formatBRL(resumo.comprometidoCompras)]],
   });
   y = depoisDaTabela();
 

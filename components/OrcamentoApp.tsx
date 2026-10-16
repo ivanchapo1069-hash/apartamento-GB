@@ -11,8 +11,6 @@ import {
   statusEntrada,
 } from "@/lib/orcamento";
 import type {
-  IluminacaoCotacao,
-  IluminacaoItem,
   ObraContrato,
   ObraParcela,
   OrcamentoEntrada,
@@ -30,8 +28,6 @@ export default function OrcamentoApp({ currentUser }: Props) {
   const [contratos, setContratos] = useState<ObraContrato[]>([]);
   const [parcelas, setParcelas] = useState<ObraParcela[]>([]);
   const [itens, setItens] = useState<ShoppingItem[]>([]);
-  const [iluminacaoItens, setIluminacaoItens] = useState<IluminacaoItem[]>([]);
-  const [iluminacaoCotacoes, setIluminacaoCotacoes] = useState<IluminacaoCotacao[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erroCarga, setErroCarga] = useState("");
   const [formAberto, setFormAberto] = useState(false);
@@ -51,8 +47,7 @@ export default function OrcamentoApp({ currentUser }: Props) {
 
   const carregar = useCallback(async () => {
     setErroCarga("");
-    const [resEntradas, resContratos, resParcelas, resItens, resIlum, resIlumCot] =
-      await Promise.all([
+    const [resEntradas, resContratos, resParcelas, resItens] = await Promise.all([
         supabase.from("orcamento_entradas").select("*").order("id", { ascending: true }),
         supabase.from("obra_contratos").select("*").order("id", { ascending: true }),
         supabase.from("obra_parcelas").select("*").order("id", { ascending: true }),
@@ -60,14 +55,9 @@ export default function OrcamentoApp({ currentUser }: Props) {
           .from("shopping_items")
           .select("id, decision, quote_price, comprado_em, valor_pago")
           .eq("decision", "FICA"),
-        supabase.from("lighting_items").select("id, comprado_em, valor_pago"),
-        supabase
-          .from("lighting_item_quotes")
-          .select("lighting_item_id, line_total, is_selected")
-          .eq("is_selected", true),
       ]);
 
-    const falhou = [resEntradas, resContratos, resParcelas, resItens, resIlum, resIlumCot].some(
+    const falhou = [resEntradas, resContratos, resParcelas, resItens].some(
       (r) => r.error,
     );
     if (falhou) {
@@ -77,8 +67,6 @@ export default function OrcamentoApp({ currentUser }: Props) {
       setContratos((resContratos.data ?? []) as ObraContrato[]);
       setParcelas((resParcelas.data ?? []) as ObraParcela[]);
       setItens((resItens.data ?? []) as ShoppingItem[]);
-      setIluminacaoItens((resIlum.data ?? []) as IluminacaoItem[]);
-      setIluminacaoCotacoes((resIlumCot.data ?? []) as IluminacaoCotacao[]);
     }
     setCarregando(false);
   }, []);
@@ -108,9 +96,8 @@ export default function OrcamentoApp({ currentUser }: Props) {
   }, [carregar]);
 
   const resumo = useMemo(
-    () =>
-      resumoOrcamento(entradas, contratos, parcelas, itens, iluminacaoItens, iluminacaoCotacoes),
-    [entradas, contratos, parcelas, itens, iluminacaoItens, iluminacaoCotacoes],
+    () => resumoOrcamento(entradas, contratos, parcelas, itens),
+    [entradas, contratos, parcelas, itens],
   );
 
   const cobertura = useMemo(
@@ -237,14 +224,6 @@ export default function OrcamentoApp({ currentUser }: Props) {
               <td>Compras (itens que ficam)</td>
               <td>{formatBRL(resumo.realizadoCompras)}</td>
               <td>{formatBRL(resumo.comprometidoCompras)}</td>
-            </tr>
-            <tr>
-              <td>
-                Iluminação
-                <small className="orc-nota">sem controle de compra ainda</small>
-              </td>
-              <td>{formatBRL(resumo.realizadoIluminacao)}</td>
-              <td>{formatBRL(resumo.comprometidoIluminacao)}</td>
             </tr>
           </tbody>
           <tfoot>
