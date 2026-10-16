@@ -8,8 +8,6 @@ import {
 import type {
   EntradaStatus,
   EntradaStatusKey,
-  IluminacaoCotacao,
-  IluminacaoItem,
   ObraContrato,
   ObraParcela,
   OrcamentoEntrada,
@@ -60,13 +58,11 @@ export interface ResumoOrcamento {
 
   realizadoObra: number;
   realizadoCompras: number;
-  realizadoIluminacao: number;
-  /** O que já saiu da conta, somando as três fontes. */
+  /** O que já saiu da conta, somando obra e compras. */
   realizado: number;
 
   comprometidoObra: number;
   comprometidoCompras: number;
-  comprometidoIluminacao: number;
   /** Contratado ou escolhido, mas ainda não pago. */
   comprometido: number;
 
@@ -90,8 +86,6 @@ export function resumoOrcamento(
   contratos: ObraContrato[],
   parcelas: ObraParcela[],
   itens: ShoppingItem[],
-  iluminacaoItens: IluminacaoItem[],
-  iluminacaoCotacoes: IluminacaoCotacao[],
 ): ResumoOrcamento {
   let entradasRecebidas = 0;
   let entradasPrevistas = 0;
@@ -128,23 +122,11 @@ export function resumoOrcamento(
     comprometidoCompras += num(item.quote_price);
   }
 
-  const totalSelecionadoPorItem = new Map<number, number>();
-  for (const cotacao of iluminacaoCotacoes) {
-    if (!cotacao.is_selected) continue;
-    const atual = totalSelecionadoPorItem.get(cotacao.lighting_item_id) ?? 0;
-    totalSelecionadoPorItem.set(cotacao.lighting_item_id, atual + num(cotacao.line_total));
-  }
-
-  let realizadoIluminacao = 0;
-  let comprometidoIluminacao = 0;
-  for (const item of iluminacaoItens) {
-    const selecionado = totalSelecionadoPorItem.get(item.id) ?? 0;
-    if (item.comprado_em) realizadoIluminacao += num(item.valor_pago ?? selecionado);
-    else comprometidoIluminacao += selecionado;
-  }
-
-  const realizado = realizadoObra + realizadoCompras + realizadoIluminacao;
-  const comprometido = comprometidoObra + comprometidoCompras + comprometidoIluminacao;
+  // A lista de luminárias (aba Cotações) não entra aqui: a iluminação foi
+  // fechada por contrato (luminárias + eletricista) e já está em Obra. Somar a
+  // lista também contaria o mesmo dinheiro duas vezes.
+  const realizado = realizadoObra + realizadoCompras;
+  const comprometido = comprometidoObra + comprometidoCompras;
   const orcamentoTotal = entradasRecebidas + entradasPrevistas;
   const totalProjeto = realizado + comprometido;
 
@@ -154,11 +136,9 @@ export function resumoOrcamento(
     orcamentoTotal,
     realizadoObra,
     realizadoCompras,
-    realizadoIluminacao,
     realizado,
     comprometidoObra,
     comprometidoCompras,
-    comprometidoIluminacao,
     comprometido,
     totalProjeto,
     saldoReal: entradasRecebidas - realizado,

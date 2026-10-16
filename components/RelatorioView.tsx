@@ -12,8 +12,6 @@ import {
 } from "@/lib/relatorio";
 import { gerarPdfRelatorio, nomeArquivoRelatorio } from "@/lib/pdfRelatorio";
 import type {
-  IluminacaoCotacao,
-  IluminacaoItem,
   ObraContrato,
   ObraParcela,
   OrcamentoEntrada,
@@ -27,8 +25,6 @@ export default function RelatorioView() {
   const [contratos, setContratos] = useState<ObraContrato[]>([]);
   const [parcelas, setParcelas] = useState<ObraParcela[]>([]);
   const [itens, setItens] = useState<ShoppingItem[]>([]);
-  const [iluminacaoItens, setIluminacaoItens] = useState<IluminacaoItem[]>([]);
-  const [iluminacaoCotacoes, setIluminacaoCotacoes] = useState<IluminacaoCotacao[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [emitidoPor, setEmitidoPor] = useState("");
@@ -58,8 +54,7 @@ export default function RelatorioView() {
   }, []);
 
   const carregar = useCallback(async () => {
-    const [resEntradas, resContratos, resParcelas, resItens, resIlum, resIlumCot] =
-      await Promise.all([
+    const [resEntradas, resContratos, resParcelas, resItens] = await Promise.all([
         supabase.from("orcamento_entradas").select("*").order("id", { ascending: true }),
         supabase.from("obra_contratos").select("*").order("id", { ascending: true }),
         supabase.from("obra_parcelas").select("*").order("id", { ascending: true }),
@@ -67,22 +62,15 @@ export default function RelatorioView() {
           .from("shopping_items")
           .select("id, section, item, decision, quote_price, quote_store, comprado_em, valor_pago")
           .eq("decision", "FICA"),
-        supabase.from("lighting_items").select("id, comprado_em, valor_pago"),
-        supabase
-          .from("lighting_item_quotes")
-          .select("lighting_item_id, line_total, is_selected")
-          .eq("is_selected", true),
       ]);
 
-    if ([resEntradas, resContratos, resParcelas, resItens, resIlum, resIlumCot].some((r) => r.error)) {
+    if ([resEntradas, resContratos, resParcelas, resItens].some((r) => r.error)) {
       setErro("Não foi possível montar o relatório. Tente novamente em instantes.");
     } else {
       setEntradas((resEntradas.data ?? []) as OrcamentoEntrada[]);
       setContratos((resContratos.data ?? []) as ObraContrato[]);
       setParcelas((resParcelas.data ?? []) as ObraParcela[]);
       setItens((resItens.data ?? []) as ShoppingItem[]);
-      setIluminacaoItens((resIlum.data ?? []) as IluminacaoItem[]);
-      setIluminacaoCotacoes((resIlumCot.data ?? []) as IluminacaoCotacao[]);
     }
     setCarregando(false);
   }, []);
@@ -92,8 +80,8 @@ export default function RelatorioView() {
   }, [carregar]);
 
   const resumo = useMemo(
-    () => resumoOrcamento(entradas, contratos, parcelas, itens, iluminacaoItens, iluminacaoCotacoes),
-    [entradas, contratos, parcelas, itens, iluminacaoItens, iluminacaoCotacoes],
+    () => resumoOrcamento(entradas, contratos, parcelas, itens),
+    [entradas, contratos, parcelas, itens],
   );
 
   const pagamentos = useMemo(
@@ -127,8 +115,6 @@ export default function RelatorioView() {
         contratos,
         parcelas,
         itens,
-        iluminacaoItens,
-        iluminacaoCotacoes,
         emitidoPor,
         hoje,
       });
@@ -394,21 +380,11 @@ export default function RelatorioView() {
                 <td className="num">{formatBRL(secao.valor)}</td>
               </tr>
             ))}
-            <tr>
-              <td>
-                Luminárias do projeto de iluminação
-                <small className="rel-nota">lista própria, sem controle de compra no app</small>
-              </td>
-              <td className="num">{iluminacaoItens.length}</td>
-              <td className="num">{formatBRL(resumo.comprometidoIluminacao)}</td>
-            </tr>
           </tbody>
           <tfoot>
             <tr>
               <td colSpan={2}>Total escolhido e não pago</td>
-              <td className="num">
-                {formatBRL(resumo.comprometidoCompras + resumo.comprometidoIluminacao)}
-              </td>
+              <td className="num">{formatBRL(resumo.comprometidoCompras)}</td>
             </tr>
           </tfoot>
         </table>
