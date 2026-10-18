@@ -27,6 +27,18 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "trocar", label: "Trocar" },
 ];
 
+type QuoteFilterKey = "todos" | "pendentes" | "cotados";
+
+const QUOTE_FILTERS: { key: QuoteFilterKey; label: string }[] = [
+  { key: "todos", label: "Todos" },
+  { key: "pendentes", label: "Pendentes" },
+  { key: "cotados", label: "Cotados" },
+];
+
+function temCotacao(item: ShoppingItem) {
+  return item.quote_price !== null && item.quote_price !== undefined;
+}
+
 const USER_STORAGE_KEY = "gb-current-user";
 
 export default function ShoppingApp() {
@@ -37,6 +49,10 @@ export default function ShoppingApp() {
   const [loadError, setLoadError] = useState("");
   const [filter, setFilter] = useState<FilterKey>("todos");
   const [search, setSearch] = useState("");
+  const [quoteFilter, setQuoteFilter] = useState<QuoteFilterKey>("todos");
+  // Itens que estavam pendentes ao abrir o filtro: continuam visíveis depois de cotados,
+  // para o card não sumir no meio da edição.
+  const [pendentesFixos, setPendentesFixos] = useState<Set<number>>(new Set());
   const [saveStatus, setSaveStatus] = useState<Record<number, SaveStatus>>({});
   const [view, setView] = useState<AppView>("decisoes");
   const [novoItemAberto, setNovoItemAberto] = useState(false);
@@ -294,9 +310,7 @@ export default function ShoppingApp() {
 
   const quoteSummary = useMemo(() => {
     const keptItems = items.filter((item) => item.decision === "FICA");
-    const quoted = keptItems.filter(
-      (item) => item.quote_price !== null && item.quote_price !== undefined,
-    );
+    const quoted = keptItems.filter(temCotacao);
     return {
       totalItems: keptItems.length,
       quotedItems: quoted.length,
@@ -310,7 +324,10 @@ export default function ShoppingApp() {
     return items.filter((item) => {
       const matchesFilter =
         view === "cotacoes"
-          ? item.decision === "FICA"
+          ? item.decision === "FICA" &&
+            (quoteFilter === "todos" ||
+              (quoteFilter === "pendentes" && (!temCotacao(item) || pendentesFixos.has(item.id))) ||
+              (quoteFilter === "cotados" && temCotacao(item)))
           : filter === "todos" ||
             (filter === "pendentes" && item.decision === null) ||
             (filter === "fica" && item.decision === "FICA") ||
@@ -321,7 +338,16 @@ export default function ShoppingApp() {
       const haystack = `${item.item} ${item.specification ?? ""} ${item.section}`.toLowerCase();
       return haystack.includes(term);
     });
-  }, [items, filter, search, view]);
+  }, [items, filter, search, view, quoteFilter, pendentesFixos]);
+
+  function escolherFiltroCotacao(key: QuoteFilterKey) {
+    if (key === "pendentes") {
+      setPendentesFixos(
+        new Set(items.filter((it) => it.decision === "FICA" && !temCotacao(it)).map((it) => it.id)),
+      );
+    }
+    setQuoteFilter(key);
+  }
 
   const secoesExistentes = useMemo(
     () => sortSections([...new Set([...SECTION_ORDER, ...items.map((it) => it.section)])]),
@@ -444,8 +470,22 @@ export default function ShoppingApp() {
             </strong>
           </div>
           <div className="quote-summary-counts">
-            <span><strong>{quoteSummary.quotedItems}</strong> cotados</span>
-            <span><strong>{quoteSummary.pendingItems}</strong> pendentes</span>
+            <button
+              type="button"
+              className={quoteFilter === "cotados" ? "is-active" : ""}
+              onClick={() => escolherFiltroCotacao(quoteFilter === "cotados" ? "todos" : "cotados")}
+            >
+              <strong>{quoteSummary.quotedItems}</strong> cotados
+            </button>
+            <button
+              type="button"
+              className={quoteFilter === "pendentes" ? "is-active" : ""}
+              onClick={() =>
+                escolherFiltroCotacao(quoteFilter === "pendentes" ? "todos" : "pendentes")
+              }
+            >
+              <strong>{quoteSummary.pendingItems}</strong> pendentes
+            </button>
           </div>
         </section>
       ) : null}
@@ -453,7 +493,21 @@ export default function ShoppingApp() {
       {ehListaDeItens && (
       <section className="filters-row">
         {view === "cotacoes" && (
-          <p className="quote-list-label">{quoteSummary.totalItems} itens que ficaram</p>
+          <>
+            <p className="quote-list-label">{quoteSummary.totalItems} itens que ficaram</p>
+            <div className="filter-chips">
+              {QUOTE_FILTERS.map((f) => (
+                <button
+                  key={f.key}
+                  type="button"
+                  className={quoteFilter === f.key ? "chip chip-active" : "chip"}
+                  onClick={() => escolherFiltroCotacao(f.key)}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </>
         )}
         {view === "decisoes" && (
           <div className="filter-chips">
