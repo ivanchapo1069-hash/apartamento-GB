@@ -392,8 +392,11 @@ textarea {
 }
 
 .quote-summary-counts {
-  display: flex;
-  gap: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  justify-content: start;
+  column-gap: 28px;
+  row-gap: 14px;
   margin-top: 12px;
   padding-top: 12px;
   border-top: 1px solid var(--border);

@@ -27,16 +27,30 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "trocar", label: "Trocar" },
 ];
 
-type QuoteFilterKey = "todos" | "pendentes" | "cotados";
+type QuoteFilterKey = "todos" | "pendentes" | "cotados" | "a-comprar" | "comprados";
 
 const QUOTE_FILTERS: { key: QuoteFilterKey; label: string }[] = [
   { key: "todos", label: "Todos" },
   { key: "pendentes", label: "Pendentes" },
   { key: "cotados", label: "Cotados" },
+  { key: "a-comprar", label: "A comprar" },
+  { key: "comprados", label: "Comprados" },
 ];
 
 function temCotacao(item: ShoppingItem) {
   return item.quote_price !== null && item.quote_price !== undefined;
+}
+
+function foiComprado(item: ShoppingItem) {
+  return Boolean(item.comprado_em);
+}
+
+function passaFiltroCotacao(item: ShoppingItem, key: QuoteFilterKey) {
+  if (key === "pendentes") return !temCotacao(item);
+  if (key === "cotados") return temCotacao(item);
+  if (key === "a-comprar") return !foiComprado(item);
+  if (key === "comprados") return foiComprado(item);
+  return true;
 }
 
 const USER_STORAGE_KEY = "gb-current-user";
@@ -50,9 +64,9 @@ export default function ShoppingApp() {
   const [filter, setFilter] = useState<FilterKey>("todos");
   const [search, setSearch] = useState("");
   const [quoteFilter, setQuoteFilter] = useState<QuoteFilterKey>("todos");
-  // Itens que estavam pendentes ao abrir o filtro: continuam visíveis depois de cotados,
-  // para o card não sumir no meio da edição.
-  const [pendentesFixos, setPendentesFixos] = useState<Set<number>>(new Set());
+  // Itens que passavam no filtro ao escolhê-lo: continuam visíveis depois de cotados ou
+  // comprados, para o card não sumir no meio da edição.
+  const [itensFixos, setItensFixos] = useState<Set<number>>(new Set());
   const [saveStatus, setSaveStatus] = useState<Record<number, SaveStatus>>({});
   const [view, setView] = useState<AppView>("decisoes");
   const [novoItemAberto, setNovoItemAberto] = useState(false);
@@ -311,10 +325,13 @@ export default function ShoppingApp() {
   const quoteSummary = useMemo(() => {
     const keptItems = items.filter((item) => item.decision === "FICA");
     const quoted = keptItems.filter(temCotacao);
+    const bought = keptItems.filter(foiComprado);
     return {
       totalItems: keptItems.length,
       quotedItems: quoted.length,
       pendingItems: keptItems.length - quoted.length,
+      boughtItems: bought.length,
+      toBuyItems: keptItems.length - bought.length,
       totalPrice: quoted.reduce((total, item) => total + Number(item.quote_price ?? 0), 0),
     };
   }, [items]);
@@ -325,9 +342,7 @@ export default function ShoppingApp() {
       const matchesFilter =
         view === "cotacoes"
           ? item.decision === "FICA" &&
-            (quoteFilter === "todos" ||
-              (quoteFilter === "pendentes" && (!temCotacao(item) || pendentesFixos.has(item.id))) ||
-              (quoteFilter === "cotados" && temCotacao(item)))
+            (passaFiltroCotacao(item, quoteFilter) || itensFixos.has(item.id))
           : filter === "todos" ||
             (filter === "pendentes" && item.decision === null) ||
             (filter === "fica" && item.decision === "FICA") ||
@@ -338,14 +353,16 @@ export default function ShoppingApp() {
       const haystack = `${item.item} ${item.specification ?? ""} ${item.section}`.toLowerCase();
       return haystack.includes(term);
     });
-  }, [items, filter, search, view, quoteFilter, pendentesFixos]);
+  }, [items, filter, search, view, quoteFilter, itensFixos]);
 
   function escolherFiltroCotacao(key: QuoteFilterKey) {
-    if (key === "pendentes") {
-      setPendentesFixos(
-        new Set(items.filter((it) => it.decision === "FICA" && !temCotacao(it)).map((it) => it.id)),
-      );
-    }
+    setItensFixos(
+      new Set(
+        items
+          .filter((it) => it.decision === "FICA" && passaFiltroCotacao(it, key))
+          .map((it) => it.id),
+      ),
+    );
     setQuoteFilter(key);
   }
 
@@ -470,22 +487,25 @@ export default function ShoppingApp() {
             </strong>
           </div>
           <div className="quote-summary-counts">
-            <button
-              type="button"
-              className={quoteFilter === "cotados" ? "is-active" : ""}
-              onClick={() => escolherFiltroCotacao(quoteFilter === "cotados" ? "todos" : "cotados")}
-            >
-              <strong>{quoteSummary.quotedItems}</strong> cotados
-            </button>
-            <button
-              type="button"
-              className={quoteFilter === "pendentes" ? "is-active" : ""}
-              onClick={() =>
-                escolherFiltroCotacao(quoteFilter === "pendentes" ? "todos" : "pendentes")
-              }
-            >
-              <strong>{quoteSummary.pendingItems}</strong> pendentes
-            </button>
+            {(
+              [
+                { key: "cotados", valor: quoteSummary.quotedItems, label: "cotados" },
+                { key: "pendentes", valor: quoteSummary.pendingItems, label: "pendentes" },
+                { key: "comprados", valor: quoteSummary.boughtItems, label: "comprados" },
+                { key: "a-comprar", valor: quoteSummary.toBuyItems, label: "a comprar" },
+              ] as { key: QuoteFilterKey; valor: number; label: string }[]
+            ).map((contador) => (
+              <button
+                key={contador.key}
+                type="button"
+                className={quoteFilter === contador.key ? "is-active" : ""}
+                onClick={() =>
+                  escolherFiltroCotacao(quoteFilter === contador.key ? "todos" : contador.key)
+                }
+              >
+                <strong>{contador.valor}</strong> {contador.label}
+              </button>
+            ))}
           </div>
         </section>
       ) : null}
