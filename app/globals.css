@@ -405,6 +405,25 @@ textarea {
   color: var(--ink);
 }
 
+.quote-summary-counts button {
+  border: 1px solid transparent;
+  background: none;
+  color: inherit;
+  font: inherit;
+  padding: 4px 10px;
+  margin: -4px -10px;
+  border-radius: 999px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.quote-summary-counts button.is-active {
+  border-color: var(--green-soft-border);
+  background: var(--green-soft-bg);
+  color: var(--green);
+  text-decoration: none;
+}
+
 /* ---------- filters ---------- */
 
 .filters-row {
