@@ -326,6 +326,7 @@ export default function ShoppingApp() {
     const keptItems = items.filter((item) => item.decision === "FICA");
     const quoted = keptItems.filter(temCotacao);
     const bought = keptItems.filter(foiComprado);
+    const toBuy = keptItems.filter((item) => !foiComprado(item));
     return {
       totalItems: keptItems.length,
       quotedItems: quoted.length,
@@ -333,6 +334,8 @@ export default function ShoppingApp() {
       boughtItems: bought.length,
       toBuyItems: keptItems.length - bought.length,
       totalPrice: quoted.reduce((total, item) => total + Number(item.quote_price ?? 0), 0),
+      toBuyPrice: toBuy.reduce((total, item) => total + Number(item.quote_price ?? 0), 0),
+      toBuyUnquoted: toBuy.filter((item) => !temCotacao(item)).length,
     };
   }, [items]);
 
@@ -486,6 +489,20 @@ export default function ShoppingApp() {
               )}
             </strong>
           </div>
+          <div className="quote-summary-falta">
+            <span>Falta comprar</span>
+            <strong>
+              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                quoteSummary.toBuyPrice,
+              )}
+            </strong>
+          </div>
+          {quoteSummary.toBuyUnquoted > 0 && (
+            <p className="quote-summary-nota">
+              + {quoteSummary.toBuyUnquoted}{" "}
+              {quoteSummary.toBuyUnquoted === 1 ? "item ainda sem cotação" : "itens ainda sem cotação"}
+            </p>
+          )}
           <div className="quote-summary-counts">
             {(
               [

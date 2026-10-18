@@ -391,6 +391,32 @@ textarea {
   line-height: 1;
 }
 
+.quote-summary-falta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.quote-summary-falta span {
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.quote-summary-falta strong {
+  color: var(--ink);
+  font-size: 1.1rem;
+}
+
+.quote-summary-nota {
+  margin: 4px 0 0;
+  text-align: right;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+}
+
 .quote-summary-counts {
   display: grid;
   grid-template-columns: repeat(2, max-content);
